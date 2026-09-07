@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Banco de Dados Relacional — Portal da Disciplina</title>
+  <link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body>
+  <div class="container">
+
+    <div class="header">
+      <img class="brasao" src="assets/img/logo_univassouras.png" alt="Universidade de Vassouras">
+      <h1>📚 Curso de Banco de Dados Relacional</h1>
+      <p>Bem-vindo ao portal da disciplina. Aqui ficam os slides de cada aula, o material de apoio e os simulados para você treinar antes da prova.</p>
+      <span class="inst">Universidade de Vassouras · Engenharia de Software</span>
+    </div>
+
+    <div class="stats">
+      <div class="stat-item"><span class="stat-number">11</span><div class="stat-label">Aulas disponíveis</div></div>
+      <div class="stat-item"><span class="stat-number">PostgreSQL</span><div class="stat-label">SGBD do semestre</div></div>
+      <div class="stat-item"><span class="stat-number">4º</span><div class="stat-label">Período · Prof. Diego Ramos Inácio</div></div>
+    </div>
+
+    <!-- ===================== FUNDAMENTOS ===================== -->
+    <h2 class="grupo-titulo">Fundamentos</h2>
+    <div class="courses-grid">
+
+      <div class="course-card">
+        <div class="course-icon">📜</div>
+        <h3 class="course-title">O que é um SGBD Relacional?</h3>
+        <p class="course-description">História do modelo relacional — de Codd ao System R. Relação, tupla, atributo e por que isso virou padrão da indústria.</p>
+        <div class="course-meta"><span>⏱️ 45 min</span><span>📊 10 slides</span></div>
+        <a href="Aula_01.html" class="btn-primary">Iniciar Aula</a>
+      </div>
+
+      <div class="course-card">
+        <div class="course-icon">🐘</div>
+        <h3 class="course-title">PostgreSQL</h3>
+        <p class="course-description">Conformidade ACID, controle de concorrência MVCC, limites reais e a terminologia do PostgreSQL. O SGBD que usaremos o semestre todo.</p>
+        <div class="course-meta"><span>⏱️ 45 min</span><span>📊 9 slides</span></div>
+        <a href="Aula_02.html" class="btn-primary">Iniciar Aula</a>
+      </div>
+
+    </div>
+
+    <!-- ===================== MODELAGEM E PROJETO ===================== -->
+    <h2 class="grupo-titulo">Modelagem e Projeto</h2>
+    <div class="courses-grid">
+
+      <div class="course-card">
+        <div class="course-icon">📐</div>
+        <h3 class="course-title">Projeto de Banco de Dados</h3>
+        <p class="course-description">Modelo entidade-relacionamento: identificar entidades, atributos e relacionamentos antes de escrever qualquer <code>CREATE</code>.</p>
+        <div class="course-meta"><span>⏱️ 60 min</span><span>📊 11 slides</span></div>
+        <a href="Aula_03.html" class="btn-primary">Iniciar Aula</a>
+      </div>
+
+      <div class="course-card">
+        <div class="course-icon">🔑</div>
+        <h3 class="course-title">CREATE TABLE e Constraints</h3>
+        <p class="course-description">Tipos de dados e restrições: <code>PRIMARY KEY</code>, <code>FOREIGN KEY</code>, <code>UNIQUE</code>, <code>CHECK</code>, <code>DEFAULT</code> e <code>SERIAL</code>.</p>
+        <div class="course-meta"><span>⏱️ 90 min</span><span>📊 16 slides</span></div>
+        <a href="Aula_04.html" class="btn-primary">Iniciar Aula</a>
+      </div>
+
+      <div class="course-card">
+        <div class="course-icon">🧩</div>
+        <h3 class="course-title">Normalização</h3>
+        <p class="course-description">Redundância gera anomalias de inserção, alteração e exclusão. 1FN, 2FN, 3FN e o processo passo a passo para chegar ao esquema limpo.</p>
+        <div class="course-meta"><span>⏱️ 90 min</span><span>📊 23 slides</span></div>
+        <a href="Aula_05.html" class="btn-primary">Iniciar Aula</a>
+      </div>
+
+    </div>
+
+    <!-- ===================== LINGUAGEM SQL ===================== -->
+    <h2 class="grupo-titulo">Linguagem SQL</h2>
+    <div class="courses-grid">
+
+      <div class="course-card">
+        <div class="course-icon">🛠️</div>
+        <h3 class="course-title">SQL — DDL e DML</h3>
+        <p class="course-description">Definir e alterar a estrutura (<code>CREATE</code>, <code>ALTER</code>, <code>DROP</code>) e manipular os dados (<code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>).</p>
+        <div class="course-meta"><span>⏱️ 90 min</span><span>📊 ~18 slides</span></div>
+        <a href="Aula_06.html" class="btn-primary">Iniciar Aula</a>
+      </div>
+
+      <div class="course-card">
+        <div class="course-icon">🔍</div>
+        <h3 class="course-title">SQL — DQL: Consultas</h3>
+        <p class="course-description"><code>SELECT</code>, filtros e ordenação, <code>JOIN</code> entre tabelas, <code>GROUP BY</code> e funções de agregação (<code>COUNT</code>, <code>SUM</code>...).</p>
+        <div class="course-meta"><span>⏱️ 90 min</span><span>📊 ~18 slides</span></div>
+        <a href="Aula_07.html" class="btn-primary">Iniciar Aula</a>
+      </div>
+
+    </div>
+
+    <!-- ===================== OBJETOS DO BANCO ===================== -->
+    <h2 class="grupo-titulo">Objetos do Banco e Integração</h2>
+    <div class="courses-grid">
+
+      <div class="course-card">
+        <div class="course-icon">⚡</div>
+        <h3 class="course-title">Triggers</h3>
+        <p class="course-description">Automação dentro do banco: funções em PL/pgSQL, gatilhos <code>BEFORE</code>/<code>AFTER</code>, registros <code>NEW</code>/<code>OLD</code> e auditoria.</p>
+        <div class="course-meta"><span>⏱️ 90 min</span><span>📊 15 slides</span></div>
+        <a href="Aula_08.html" class="btn-primary">Iniciar Aula</a>
+      </div>
+
+      <div class="course-card">
+        <div class="course-icon">👓</div>
+        <h3 class="course-title">Views</h3>
+        <p class="course-description">Tabelas virtuais baseadas em consulta: guardar o <code>SELECT</code>, não o resultado. <code>CREATE VIEW</code> com <code>JOIN</code> e quando usar.</p>
+        <div class="course-meta"><span>⏱️ 60 min</span><span>📊 10 slides</span></div>
+        <a href="Aula_09.html" class="btn-primary">Iniciar Aula</a>
+      </div>
+
+      <div class="course-card">
+        <div class="course-icon">👥</div>
+        <h3 class="course-title">Usuários e Permissões</h3>
+        <p class="course-description">Criação de <em>roles</em>, <code>GRANT</code> e <code>REVOKE</code>, privilégios por schema e boas práticas de segurança no PostgreSQL.</p>
+        <div class="course-meta"><span>⏱️ 60 min</span><span>📊 14 slides</span></div>
+        <a href="Aula_10.html" class="btn-primary">Iniciar Aula</a>
+      </div>
+
+      <div class="course-card">
+        <div class="course-icon">🔄</div>
+        <h3 class="course-title">API RESTful vs. SQL Direto</h3>
+        <p class="course-description">Camada de acesso a dados: quando expor uma API REST e quando falar SQL direto no código. Prós, contras e o meio-termo.</p>
+        <div class="course-meta"><span>⏱️ 60 min</span><span>📊 15 slides</span></div>
+        <a href="Aula_11.html" class="btn-primary">Iniciar Aula</a>
+      </div>
+
+    </div>
+
+    <!-- ===================== APOIO ===================== -->
+    <h2 class="grupo-titulo">Material de Apoio</h2>
+    <div class="courses-grid">
+      <div class="course-card">
+        <div class="course-icon">📖</div>
+        <h3 class="course-title">Referência de SQL</h3>
+        <p class="course-description">Cola de sintaxe: DDL, DML, DQL, JOINs e agregação, com exemplos prontos para adaptar.</p>
+        <div class="course-meta"><span>📚 Consulta rápida</span></div>
+        <a href="apoio/sql_referencia.html" class="btn-ghost">Consultar</a>
+      </div>
+      <div class="course-card">
+        <div class="course-icon">🧩</div>
+        <h3 class="course-title">Normalização passo a passo</h3>
+        <p class="course-description">Exemplo resolvido: encontrar as violações de 1FN/2FN/3FN e chegar ao esquema normalizado.</p>
+        <div class="course-meta"><span>📚 Consulta rápida</span></div>
+        <a href="apoio/normalizacao.html" class="btn-ghost">Consultar</a>
+      </div>
+      <div class="course-card">
+        <div class="course-icon">⚡</div>
+        <h3 class="course-title">Triggers, Views e Usuários</h3>
+        <p class="course-description">Modelos de PL/pgSQL, <code>CREATE VIEW</code> e gestão de <em>roles</em> em um cenário de exemplo.</p>
+        <div class="course-meta"><span>📚 Consulta rápida</span></div>
+        <a href="apoio/triggers_views_users.html" class="btn-ghost">Consultar</a>
+      </div>
+    </div>
+
+    <!-- ===================== SIMULADOS ===================== -->
+    <div class="banner">
+      <div class="ico">📝</div>
+      <h3>Simulado P1 — interativo</h3>
+      <p>Normalização, DDL, DML e consultas · você escreve o SQL, a página executa de verdade e responde ✓ / ✗ na hora</p>
+      <a href="simulados/Simulado_P1_BD_Relacional.html">Iniciar Simulado P1</a>
+    </div>
+
+    <div class="footer">
+      <p>💡 Dica: dentro dos slides, navegue com as setas ← → do teclado. Tudo é responsivo.</p>
+      <p style="margin-top:1rem">Feito com 😤 em HTML, CSS e JavaScript puro — mas pensado com carinho. Espero que gostem!</p>
+      <p class="prof">👨‍🏫 Prof. Me. Diego Ramos Inácio</p>
+      <p>Saquarema — RJ</p>
+    </div>
+
+  </div>
+
+  <script>
+    document.querySelectorAll('.course-card').forEach(function(card){
+      card.addEventListener('mouseenter',function(){card.style.transform='translateY(-10px) scale(1.02)';});
+      card.addEventListener('mouseleave',function(){card.style.transform='translateY(0) scale(1)';});
+    });
+    document.querySelectorAll('.btn-primary').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var t=btn.textContent;btn.textContent='Carregando...';btn.style.opacity='0.7';
+        setTimeout(function(){btn.textContent=t;btn.style.opacity='1';},500);
+      });
+    });
+  </script>
+</body>
+</html>

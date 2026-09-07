@@ -1,0 +1,49 @@
+# ================================================================
+# bd-relacional — o repositório publica APENAS o site (GitHub Pages).
+# Material de aula, provas, notas e originais ficam locais.
+# ================================================================
+
+# --- Provas, gabaritos e notas (NUNCA publicar) ---
+/provas/
+/notas/
+/Prova/
+/Tabelas de Prova/
+/Entregas/
+/Exercícios/
+GABARITO*
+gabarito*
+*Gabarito*
+
+# --- Originais de aula (mantidos localmente, fora do site) ---
+*.pptx
+*.ppt
+*.docx
+*.doc
+*.xlsx
+*.xls
+*.ods
+*.odt
+*.pdf
+*.rar
+*.zip
+
+# --- Repositório git aninhado (não faz parte deste site) ---
+/Projetos_Banco_de_Dados_Relacional/
+
+# --- Notebooks (exceto se explicitamente adicionados) ---
+*.ipynb
+.ipynb_checkpoints/
+
+# --- Ferramentas / sistema ---
+.claude/
+.vscode/
+.DS_Store
+Thumbs.db
+HISTORICO_REMOVIDO.md
+MATRIZ*
+Plano*de*ensino*
+
+# --- Temporários / trabalho interno ---
+.tmp*
+*~
+/_trabalho/

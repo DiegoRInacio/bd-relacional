@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 01 — O que é um SGBD Relacional?</title>
+  <link rel="stylesheet" href="assets/css/deck.css">
+</head>
+<body>
+
+  <div class="deck-top">
+    <span class="t">Banco de Dados Relacional · Aula 01</span>
+    <a href="index.html">← Portal</a>
+  </div>
+  <div class="deck-prog"></div>
+
+  <div class="deck">
+
+    <!-- 1 · CAPA -->
+    <section class="slide cover active">
+      <img class="crest" src="assets/img/logo_univassouras.png" alt="Universidade de Vassouras">
+      <h1>O que é um Sistema Gerenciador<br>de Banco de Dados Relacional?</h1>
+      <div class="meta">
+        Banco de Dados Relacional · Aula 01<br>
+        Curso de Engenharia de Software — Universidade de Vassouras<br>
+        Prof. Diego Ramos Inácio
+      </div>
+    </section>
+
+    <!-- 2 · O PROBLEMA -->
+    <section class="slide">
+      <span class="tag">O problema</span>
+      <h2>E se não existisse banco de dados?</h2>
+      <div class="split wide-fig">
+        <div>
+          <p>Um sistema de escola precisa guardar alunos, cursos e notas. Sem um SGBD, você teria que fazer <b>tudo na mão</b>:</p>
+          <ul>
+            <li>inventar o <b>formato</b> dos arquivos;</li>
+            <li>escrever o código que <b>lê e grava</b> byte a byte;</li>
+            <li>impedir dois usuários de <b>escrever ao mesmo tempo</b>;</li>
+            <li>tratar <b>queda de energia</b> no meio da gravação;</li>
+            <li>e <b>repetir isso</b> no próximo sistema.</li>
+          </ul>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 460 380" role="img" aria-label="Sem SGBD: a aplicação fala direto com vários arquivos, de forma frágil">
+            <rect class="box-soft" x="150" y="20" width="160" height="60" rx="10"/>
+            <text x="230" y="46" text-anchor="middle" font-size="16">Sua aplicação</text>
+            <text x="230" y="66" text-anchor="middle" font-size="12" class="cap">+ todo o código de arquivo</text>
+            <path class="bad" d="M180,80 C120,150 110,180 90,250"/>
+            <path class="bad" d="M230,80 C230,160 230,190 230,250"/>
+            <path class="bad" d="M280,80 C340,150 350,180 370,250"/>
+            <g>
+              <rect class="box-soft" x="40" y="250" width="100" height="90" rx="8"/>
+              <text x="90" y="300" text-anchor="middle" font-size="13">alunos.dat</text>
+              <rect class="box-soft" x="180" y="250" width="100" height="90" rx="8"/>
+              <text x="230" y="300" text-anchor="middle" font-size="13">cursos.dat</text>
+              <rect class="box-soft" x="320" y="250" width="100" height="90" rx="8"/>
+              <text x="370" y="300" text-anchor="middle" font-size="13">notas.dat</text>
+            </g>
+            <text x="130" y="160" font-size="22" class="warn">⚠</text>
+            <text x="255" y="150" font-size="22" class="warn">⚠</text>
+            <text x="330" y="160" font-size="22" class="warn">⚠</text>
+            <text x="230" y="372" text-anchor="middle" font-size="12" class="cap">concorrência, falhas e formato — problema seu</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 · A SOLUÇÃO -->
+    <section class="slide">
+      <span class="tag">A solução</span>
+      <h2>O SGBD entra no meio</h2>
+      <p><b>SGBD</b> = Sistema Gerenciador de Banco de Dados. Um programa, feito por outras pessoas,
+      que fica entre a sua aplicação e os dados. Você diz <b>o quê</b>; ele resolve <b>o como</b>.</p>
+      <div class="fig">
+        <svg viewBox="0 0 900 260" role="img" aria-label="Aplicação envia SQL ao SGBD, que acessa os arquivos em disco">
+          <defs><marker id="m1" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+          <rect class="box-soft" x="20" y="95" width="170" height="70" rx="10"/>
+          <text x="105" y="125" text-anchor="middle" font-size="17">Sua aplicação</text>
+          <text x="105" y="147" text-anchor="middle" font-size="13" class="cap">site · app · script</text>
+
+          <line class="ln" x1="192" y1="130" x2="340" y2="130" marker-end="url(#m1)"/>
+          <text x="266" y="116" text-anchor="middle" font-size="14" class="hl">SELECT ... FROM ...</text>
+
+          <rect class="box" x="345" y="55" width="245" height="150" rx="12"/>
+          <text x="467" y="85" text-anchor="middle" font-size="17" class="hl">PostgreSQL (SGBD)</text>
+          <text x="467" y="115" text-anchor="middle" font-size="14">concorrência entre usuários</text>
+          <text x="467" y="140" text-anchor="middle" font-size="14">transações: tudo ou nada</text>
+          <text x="467" y="165" text-anchor="middle" font-size="14">índices para busca rápida</text>
+          <text x="467" y="190" text-anchor="middle" font-size="14">usuários e permissões</text>
+
+          <line class="ln" x1="592" y1="130" x2="712" y2="130" marker-end="url(#m1)"/>
+          <g transform="translate(740,70)">
+            <path class="db" d="M0,18 v90 a58,18 0 0 0 116,0 v-90 a58,18 0 0 0 -116,0 z"/>
+            <ellipse cx="58" cy="18" rx="58" ry="18" class="db"/>
+            <path class="dbl" d="M0,52 a58,18 0 0 0 116,0"/>
+            <path class="dbl" d="M0,82 a58,18 0 0 0 116,0"/>
+          </g>
+          <text x="798" y="212" text-anchor="middle" font-size="13" class="cap">banco de dados em disco</text>
+        </svg>
+      </div>
+    </section>
+
+    <!-- 4 · O QUE O SGBD RESOLVE -->
+    <section class="slide">
+      <span class="tag">Na prática</span>
+      <h2>O que ganhamos de graça</h2>
+      <table>
+        <tr><th>Sem SGBD</th><th>Com SGBD</th></tr>
+        <tr><td>Formato de arquivo inventado por você</td><td>Tabelas e tipos padronizados</td></tr>
+        <tr><td>Código de leitura/escrita manual</td><td>Comandos SQL</td></tr>
+        <tr><td>"Trava" o arquivo inteiro</td><td>Vários usuários ao mesmo tempo</td></tr>
+        <tr><td>Corrompe se cair a energia</td><td>Transações: tudo ou nada</td></tr>
+        <tr><td>Qualquer um lê tudo</td><td>Usuários e permissões</td></tr>
+        <tr><td>Buscar = varrer o arquivo</td><td>Índices para consulta rápida</td></tr>
+      </table>
+    </section>
+
+    <!-- 5 · ANTES DO RELACIONAL -->
+    <section class="slide">
+      <span class="tag">História</span>
+      <h2>Antes do modelo relacional</h2>
+      <div class="split">
+        <div>
+          <p>Nos anos 60, os bancos eram <b>hierárquicos</b> (IBM IMS) ou em <b>rede</b> (CODASYL):
+          registros ligados por <b>ponteiros</b>.</p>
+          <p>Para achar "as notas do João", o programador escrevia o caminho, passo a passo,
+          <b>seguindo ponteiros na mão</b>.</p>
+          <p>Mudou a estrutura? Reescreva os programas.</p>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 420 380" role="img" aria-label="Modelo hierárquico: registros ligados por ponteiros">
+            <defs><marker id="m2" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+            <rect class="box" x="150" y="15" width="120" height="42" rx="6"/>
+            <text x="210" y="42" text-anchor="middle" font-size="15">Curso</text>
+            <line class="ln" x1="195" y1="57" x2="110" y2="115" marker-end="url(#m2)"/>
+            <line class="ln" x1="225" y1="57" x2="310" y2="115" marker-end="url(#m2)"/>
+            <text x="120" y="95" font-size="12" class="cap">ponteiro</text>
+            <rect class="box-soft" x="40" y="115" width="150" height="42" rx="6"/>
+            <text x="115" y="142" text-anchor="middle" font-size="14">Aluno "João"</text>
+            <rect class="box-soft" x="235" y="115" width="150" height="42" rx="6"/>
+            <text x="310" y="142" text-anchor="middle" font-size="14">Aluno "Maria"</text>
+            <line class="ln" x1="95" y1="157" x2="78" y2="218" marker-end="url(#m2)"/>
+            <line class="ln" x1="145" y1="157" x2="200" y2="218" marker-end="url(#m2)"/>
+            <line class="ln" x1="315" y1="157" x2="340" y2="218" marker-end="url(#m2)"/>
+            <rect class="box-soft" x="12" y="220" width="126" height="40" rx="6"/>
+            <text x="75" y="245" text-anchor="middle" font-size="12">Nota BD 9,0</text>
+            <rect class="box-soft" x="147" y="220" width="126" height="40" rx="6"/>
+            <text x="210" y="245" text-anchor="middle" font-size="12">Nota POO 8,0</text>
+            <rect class="box-soft" x="282" y="220" width="126" height="40" rx="6"/>
+            <text x="345" y="245" text-anchor="middle" font-size="12">Nota BD 7,5</text>
+            <text x="210" y="320" text-anchor="middle" font-size="13" class="cap">consulta = percorrer a árvore</text>
+            <text x="210" y="342" text-anchor="middle" font-size="13" class="cap">na ordem certa, no código</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 · CODD -->
+    <section class="slide">
+      <span class="tag">História</span>
+      <h2>1970 — Edgar F. Codd</h2>
+      <p>Pesquisador da IBM, propõe o <b>modelo relacional</b>: os dados são apenas <b>tabelas</b>
+      e você descreve <b>o que</b> quer — não o caminho até lá.</p>
+      <div class="fig">
+        <svg viewBox="0 0 900 190" role="img" aria-label="Linha do tempo do modelo relacional de 1970 aos anos 1980">
+          <line class="ln" x1="40" y1="95" x2="860" y2="95"/>
+          <g text-anchor="middle">
+            <circle cx="90"  cy="95" r="8" class="hl"/><text x="90"  y="66" font-size="16" class="hl">1970</text><text x="90"  y="128" font-size="13">artigo de Codd</text>
+            <circle cx="280" cy="95" r="8" class="hl"/><text x="280" y="66" font-size="16" class="hl">1973–77</text><text x="280" y="128" font-size="13">Ingres · Berkeley</text>
+            <circle cx="470" cy="95" r="8" class="hl"/><text x="470" y="66" font-size="16" class="hl">1974–78</text><text x="470" y="128" font-size="13">System R → nasce o SQL</text>
+            <circle cx="660" cy="95" r="8" class="hl"/><text x="660" y="66" font-size="16" class="hl">1979</text><text x="660" y="128" font-size="13">Oracle · 1º produto SQL</text>
+            <circle cx="820" cy="95" r="8" class="hl"/><text x="820" y="66" font-size="16" class="hl">anos 80</text><text x="820" y="128" font-size="13">dominância relacional</text>
+          </g>
+        </svg>
+      </div>
+      <div class="callout"><b>Navegacional</b> ("abra isto, siga aquele ponteiro") &nbsp;→&nbsp;
+      <b>Declarativo</b> ("me devolva os alunos com idade &gt; 18"). O <i>como</i> vira problema do SGBD.</div>
+    </section>
+
+    <!-- 7 · SGBDs HOJE -->
+    <section class="slide">
+      <span class="tag">Panorama</span>
+      <h2>SGBDs relacionais hoje</h2>
+      <div class="fig">
+        <svg viewBox="0 0 900 340" role="img" aria-label="Vários SGBDs relacionais, todos falam SQL; usaremos PostgreSQL">
+          <defs><marker id="m7" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="rgba(255,255,255,.5)"/></marker></defs>
+          <circle cx="450" cy="170" r="62" class="box"/>
+          <text x="450" y="165" text-anchor="middle" font-size="22" class="hl">SQL</text>
+          <text x="450" y="188" text-anchor="middle" font-size="12" class="cap">a linguagem comum</text>
+
+          <g font-size="15" text-anchor="middle">
+            <line class="ln-soft" x1="388" y1="150" x2="230" y2="70" marker-end="url(#m7)"/>
+            <rect class="box-soft" x="110" y="40" width="150" height="46" rx="8"/><text x="185" y="69">Oracle</text>
+            <line class="ln-soft" x1="388" y1="185" x2="230" y2="270" marker-end="url(#m7)"/>
+            <rect class="box-soft" x="110" y="250" width="150" height="46" rx="8"/><text x="185" y="279">SQL Server</text>
+            <line class="ln-soft" x1="512" y1="150" x2="670" y2="70" marker-end="url(#m7)"/>
+            <rect class="box-soft" x="640" y="40" width="150" height="46" rx="8"/><text x="715" y="69">IBM Db2</text>
+            <line class="ln-soft" x1="512" y1="185" x2="670" y2="270" marker-end="url(#m7)"/>
+            <rect class="box-soft" x="640" y="250" width="150" height="46" rx="8"/><text x="715" y="279">MySQL · SQLite</text>
+            <line class="ln" x1="450" y1="232" x2="450" y2="290" marker-end="url(#m7)"/>
+            <rect class="box" x="330" y="290" width="240" height="46" rx="8"/><text x="450" y="319" class="hl">PostgreSQL · usado na aula</text>
+          </g>
+        </svg>
+      </div>
+      <p>Todos falam <b>SQL</b>, com pequenas diferenças de dialeto. Aprendendo um, você lê os outros.</p>
+    </section>
+
+    <!-- 8 · ANATOMIA DA TABELA -->
+    <section class="slide">
+      <span class="tag">Fundamento</span>
+      <h2>Anatomia de uma tabela</h2>
+      <div class="fig">
+        <svg viewBox="0 0 900 420" role="img" aria-label="Tabela aluno anotada: esquema, tupla e atributo">
+          <defs><marker id="m3" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+          <text x="150" y="40" font-size="15" class="cap">relação  aluno</text>
+          <rect class="head" x="150" y="55" width="420" height="48"/>
+          <rect class="cell" x="150" y="55" width="150" height="48"/><rect class="cell" x="300" y="55" width="150" height="48"/><rect class="cell" x="450" y="55" width="120" height="48"/>
+          <text x="225" y="85" text-anchor="middle" font-size="16" class="hl">matricula</text>
+          <text x="375" y="85" text-anchor="middle" font-size="16" class="hl">nome</text>
+          <text x="510" y="85" text-anchor="middle" font-size="16" class="hl">idade</text>
+          <g font-size="15">
+            <rect class="cell" x="150" y="103" width="150" height="44"/><rect class="cell" x="300" y="103" width="150" height="44"/><rect class="cell" x="450" y="103" width="120" height="44"/>
+            <text x="225" y="131" text-anchor="middle">20240001</text><text x="375" y="131" text-anchor="middle">Ana Prado</text><text x="510" y="131" text-anchor="middle">19</text>
+            <rect class="cell" x="150" y="147" width="150" height="44"/><rect class="cell" x="300" y="147" width="150" height="44"/><rect class="cell" x="450" y="147" width="120" height="44"/>
+            <text x="225" y="175" text-anchor="middle">20240002</text><text x="375" y="175" text-anchor="middle">Bruno Nunes</text><text x="510" y="175" text-anchor="middle">22</text>
+            <rect class="cell" x="150" y="191" width="150" height="44"/><rect class="cell" x="300" y="191" width="150" height="44"/><rect class="cell" x="450" y="191" width="120" height="44"/>
+            <text x="225" y="219" text-anchor="middle">20240003</text><text x="375" y="219" text-anchor="middle">Carla Dias</text><text x="510" y="219" text-anchor="middle">20</text>
+          </g>
+          <line class="ln" x1="700" y1="79" x2="574" y2="79" marker-end="url(#m3)"/>
+          <text x="710" y="75" font-size="15">esquema / cabeçalho</text>
+          <text x="710" y="95" font-size="13" class="cap">a "forma" da relação</text>
+          <line class="ln" x1="700" y1="169" x2="574" y2="169" marker-end="url(#m3)"/>
+          <text x="710" y="173" font-size="15">tupla — uma linha</text>
+          <line class="ln" x1="375" y1="300" x2="375" y2="239" marker-end="url(#m3)"/>
+          <text x="375" y="325" text-anchor="middle" font-size="15">atributo — uma coluna</text>
+          <text x="375" y="347" text-anchor="middle" font-size="13" class="cap">seu tipo é o domínio: VARCHAR(30)</text>
+        </svg>
+      </div>
+    </section>
+
+    <!-- 9 · REGRAS -->
+    <section class="slide">
+      <span class="tag">Fundamento</span>
+      <h2>Regras de uma relação</h2>
+      <div class="split">
+        <div>
+          <ul>
+            <li>A <b>ordem das linhas</b> não importa.</li>
+            <li>A <b>ordem das colunas</b> não importa — chame pelo nome.</li>
+            <li><b>Nenhuma linha se repete</b> por inteiro.</li>
+            <li>Cada célula guarda <b>um único valor</b> (atômico).</li>
+          </ul>
+          <div class="callout">É o que permite consultar os dados com álgebra — e é daí que vem o poder do SQL.</div>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 420 360" role="img" aria-label="O que quebra a regra da relação">
+            <text x="20" y="30" font-size="15" class="cap">isto NÃO é uma relação válida:</text>
+            <rect class="head" x="20" y="45" width="120" height="40"/><rect class="cell" x="20" y="45" width="120" height="40"/>
+            <rect class="head" x="140" y="45" width="240" height="40"/><rect class="cell" x="140" y="45" width="240" height="40"/>
+            <text x="80" y="70" text-anchor="middle" font-size="14" class="hl">aluno</text>
+            <text x="260" y="70" text-anchor="middle" font-size="14" class="hl">telefones</text>
+            <rect class="cell" x="20" y="85" width="120" height="44"/><rect class="cell" x="140" y="85" width="240" height="44"/>
+            <text x="80" y="112" text-anchor="middle" font-size="13">Ana</text>
+            <text x="260" y="112" text-anchor="middle" font-size="13">99999-1111, 3322-4455</text>
+            <line class="bad" x1="150" y1="128" x2="370" y2="90"/>
+            <text x="150" y="150" font-size="12" class="warn">⚠ lista dentro da célula</text>
+            <rect class="cell" x="20" y="145" width="120" height="40"/><rect class="cell" x="140" y="145" width="240" height="40"/>
+            <text x="80" y="170" text-anchor="middle" font-size="13">Ana</text>
+            <text x="260" y="170" text-anchor="middle" font-size="13">99999-1111</text>
+            <rect class="cell" x="20" y="185" width="120" height="40"/><rect class="cell" x="140" y="185" width="240" height="40"/>
+            <text x="80" y="210" text-anchor="middle" font-size="13">Ana</text>
+            <text x="260" y="210" text-anchor="middle" font-size="13">99999-1111</text>
+            <line class="bad" x1="20" y1="225" x2="140" y2="185"/>
+            <text x="20" y="247" font-size="12" class="warn">⚠ linha idêntica repetida</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10 · FORMALIZAÇÃO -->
+    <section class="slide">
+      <span class="tag">Formalização</span>
+      <h2>O que é uma relação, formalmente</h2>
+      <p>É um <b>subconjunto do produto cartesiano</b> dos domínios dos atributos:</p>
+      <pre><code>r(R)  ⊆  dom(A₁) × dom(A₂) × ... × dom(Aₙ)</code></pre>
+      <p>Para <code>aluno(matricula, nome, idade)</code>:</p>
+      <pre><code>aluno  ⊆  CHAR(8) × VARCHAR(30) × INTEGER</code></pre>
+      <p>Uma linha concreta é uma <b>tupla</b> desse conjunto:</p>
+      <pre><code>('20240001', 'Ana Prado', 19)   ∈   aluno</code></pre>
+    </section>
+
+    <!-- 11 · CHAVE PRIMÁRIA -->
+    <section class="slide">
+      <span class="tag">Conceito-chave</span>
+      <h2>Como identificar uma linha?</h2>
+      <div class="split">
+        <div>
+          <p>Se nenhuma linha se repete, precisa haver algo que <b>identifica cada tupla
+          sem ambiguidade</b>: a <b>chave primária</b>.</p>
+          <p><code>nome</code> não serve — pode existir outra "Ana Prado".
+          <code>matricula</code> serve.</p>
+          <p class="cap">Voltamos a isso na Aula 04, com <code>PRIMARY KEY</code>.</p>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 420 300" role="img" aria-label="A coluna matricula identifica cada linha; nome pode repetir">
+            <rect class="head" x="30" y="40" width="150" height="44"/><rect class="cell" x="30" y="40" width="150" height="44"/>
+            <rect class="head" x="180" y="40" width="200" height="44"/><rect class="cell" x="180" y="40" width="200" height="44"/>
+            <text x="105" y="68" text-anchor="middle" font-size="15" class="hl">matricula 🔑</text>
+            <text x="280" y="68" text-anchor="middle" font-size="15">nome</text>
+            <rect class="cell" x="30" y="84" width="150" height="42"/><rect class="cell" x="180" y="84" width="200" height="42"/>
+            <text x="105" y="111" text-anchor="middle" font-size="14" class="hl">20240001</text><text x="280" y="111" text-anchor="middle" font-size="14">Ana Prado</text>
+            <rect class="cell" x="30" y="126" width="150" height="42"/><rect class="cell" x="180" y="126" width="200" height="42"/>
+            <text x="105" y="153" text-anchor="middle" font-size="14" class="hl">20240002</text><text x="280" y="153" text-anchor="middle" font-size="14">Ana Prado</text>
+            <line class="ln" x1="280" y1="210" x2="280" y2="172" marker-end="url(#m3)"/>
+            <text x="280" y="232" text-anchor="middle" font-size="13" class="cap">mesmo nome — tudo bem</text>
+            <line class="ln" x1="105" y1="210" x2="105" y2="172" marker-end="url(#m3)"/>
+            <text x="105" y="232" text-anchor="middle" font-size="13" class="cap">matrícula sempre única</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 · FK -->
+    <section class="slide">
+      <span class="tag">Conceito-chave</span>
+      <h2>Tabelas se conectam</h2>
+      <div class="fig">
+        <svg viewBox="0 0 900 330" role="img" aria-label="aluno.curso_id referencia curso.id">
+          <defs><marker id="m4" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+          <text x="70" y="45" font-size="17" class="hl">curso</text>
+          <rect class="head" x="70" y="55" width="110" height="40"/><rect class="cell" x="70" y="55" width="110" height="40"/>
+          <rect class="head" x="180" y="55" width="240" height="40"/><rect class="cell" x="180" y="55" width="240" height="40"/>
+          <text x="125" y="80" text-anchor="middle" font-size="15">id (PK)</text>
+          <text x="300" y="80" text-anchor="middle" font-size="15">nome</text>
+          <rect class="cell" x="70" y="95" width="110" height="40"/><rect class="cell" x="180" y="95" width="240" height="40"/>
+          <text x="125" y="120" text-anchor="middle" font-size="15" class="hl">10</text>
+          <text x="300" y="120" text-anchor="middle" font-size="15">Eng. de Software</text>
+
+          <text x="70" y="205" font-size="17" class="hl">aluno</text>
+          <rect class="head" x="70" y="215" width="180" height="40"/><rect class="cell" x="70" y="215" width="180" height="40"/>
+          <rect class="head" x="250" y="215" width="130" height="40"/><rect class="cell" x="250" y="215" width="130" height="40"/>
+          <rect class="head" x="380" y="215" width="150" height="40"/><rect class="cell" x="380" y="215" width="150" height="40"/>
+          <text x="160" y="240" text-anchor="middle" font-size="15">matricula (PK)</text>
+          <text x="315" y="240" text-anchor="middle" font-size="15">nome</text>
+          <text x="455" y="240" text-anchor="middle" font-size="14">curso_id (FK)</text>
+          <rect class="cell" x="70" y="255" width="180" height="40"/><rect class="cell" x="250" y="255" width="130" height="40"/><rect class="cell" x="380" y="255" width="150" height="40"/>
+          <text x="160" y="280" text-anchor="middle" font-size="15">20240001</text>
+          <text x="315" y="280" text-anchor="middle" font-size="15">Ana</text>
+          <text x="455" y="280" text-anchor="middle" font-size="15" class="hl">10</text>
+
+          <path class="ln" d="M455,255 C455,175 230,175 130,137" marker-end="url(#m4)"/>
+          <text x="580" y="175" font-size="16">chave estrangeira</text>
+          <text x="580" y="198" font-size="14" class="cap">aluno.curso_id  →  curso.id</text>
+          <text x="580" y="226" font-size="14" class="cap">o nome do curso fica em</text>
+          <text x="580" y="246" font-size="14" class="cap">um lugar só — nunca repetido</text>
+        </svg>
+      </div>
+    </section>
+
+    <!-- 13 · SQL EM 30s -->
+    <section class="slide">
+      <span class="tag">Para onde vamos</span>
+      <h2>SQL em 30 segundos</h2>
+      <pre><code>-- 1. criar a estrutura
+CREATE TABLE aluno (
+    matricula CHAR(8)     PRIMARY KEY,
+    nome      VARCHAR(30) NOT NULL,
+    idade     INTEGER
+);
+
+-- 2. inserir dados
+INSERT INTO aluno VALUES ('20240001', 'Ana Prado', 19);
+
+-- 3. consultar
+SELECT nome FROM aluno WHERE idade &gt;= 18;</code></pre>
+      <div class="callout">Você descreve o <b>resultado</b>; o PostgreSQL descobre como entregá-lo.</div>
+    </section>
+
+    <!-- 14 · OS DOIS PROBLEMAS -->
+    <section class="slide">
+      <span class="tag">O curso em 2 perguntas</span>
+      <h2>O que vamos aprender a responder</h2>
+      <div class="fig">
+        <svg viewBox="0 0 940 320" role="img" aria-label="Do mundo real às tabelas via projeto de BD, e das tabelas à resposta via SQL">
+          <defs><marker id="m14" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+
+          <!-- Perguntas, bem acima -->
+          <text x="290" y="40" text-anchor="middle" font-size="15" class="hl">Pergunta 1</text>
+          <line class="ln-soft" x1="290" y1="50" x2="290" y2="92"/>
+          <text x="640" y="40" text-anchor="middle" font-size="15" class="hl">Pergunta 2</text>
+          <line class="ln-soft" x1="640" y1="50" x2="640" y2="92"/>
+
+          <!-- rótulos das setas, acima das setas -->
+          <text x="290" y="112" text-anchor="middle" font-size="15" class="hl">projeto de BD</text>
+          <text x="640" y="112" text-anchor="middle" font-size="15" class="hl">SQL</text>
+
+          <!-- caixas -->
+          <rect class="box-soft" x="30" y="150" width="215" height="90" rx="12"/>
+          <text x="137" y="188" text-anchor="middle" font-size="17">mundo real</text>
+          <text x="137" y="214" text-anchor="middle" font-size="12" class="cap">escola · loja · hospital</text>
+
+          <line class="ln" x1="250" y1="195" x2="352" y2="195" marker-end="url(#m14)"/>
+
+          <rect class="box" x="360" y="150" width="200" height="90" rx="12"/>
+          <text x="460" y="200" text-anchor="middle" font-size="18" class="hl">tabelas</text>
+
+          <line class="ln" x1="565" y1="195" x2="667" y2="195" marker-end="url(#m14)"/>
+
+          <rect class="box-soft" x="675" y="150" width="235" height="90" rx="12"/>
+          <text x="792" y="200" text-anchor="middle" font-size="17">a resposta certa</text>
+
+          <!-- sub-rótulos, abaixo das caixas -->
+          <text x="290" y="272" text-anchor="middle" font-size="12" class="cap">modelo ER + normalização</text>
+          <text x="640" y="272" text-anchor="middle" font-size="12" class="cap">SELECT · JOIN · agregação</text>
+        </svg>
+      </div>
+      <div class="cols">
+        <div class="box"><b>1 · Quais tabelas criar?</b><br>Quebrar o mundo real em relações sem redundância. → Aulas 03 e 05.</div>
+        <div class="box"><b>2 · Como consultar?</b><br>Extrair a informação certa cruzando tabelas. → Aulas 06 e 07.</div>
+      </div>
+    </section>
+
+    <!-- 15 · PENSE -->
+    <section class="slide">
+      <span class="tag">Pergunta pra pensar</span>
+      <h2>Antes da próxima aula</h2>
+      <div class="split">
+        <div>
+          <p>Uma planilha de pedidos tem estas colunas:</p>
+          <pre><code>id_pedido | cliente | telefone_cliente
+          | produto | preço | qtd</code></pre>
+          <ul>
+            <li>Se "João" fizer 5 pedidos, quantas vezes o <b>telefone</b> aparece?</li>
+            <li>O que acontece se ele <b>trocar de telefone</b>?</li>
+            <li>Como você <b>separaria</b> isso em tabelas?</li>
+          </ul>
+          <p class="cap">Guarde suas respostas — é o tema das Aulas 03 e 05.</p>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 400 320" role="img" aria-label="Planilha com o telefone do cliente repetido em cada linha">
+            <g font-size="12">
+              <rect class="head" x="15" y="20" width="90" height="34"/><rect class="cell" x="15" y="20" width="90" height="34"/>
+              <rect class="head" x="105" y="20" width="90" height="34"/><rect class="cell" x="105" y="20" width="90" height="34"/>
+              <rect class="head" x="195" y="20" width="180" height="34"/><rect class="cell" x="195" y="20" width="180" height="34"/>
+              <text x="60" y="42" text-anchor="middle">pedido</text><text x="150" y="42" text-anchor="middle">cliente</text><text x="285" y="42" text-anchor="middle" class="hl">telefone_cliente</text>
+              <rect class="cell" x="15" y="54" width="90" height="34"/><rect class="cell" x="105" y="54" width="90" height="34"/><rect class="cell" x="195" y="54" width="180" height="34"/>
+              <text x="60" y="76" text-anchor="middle">1</text><text x="150" y="76" text-anchor="middle">João</text><text x="285" y="76" text-anchor="middle" class="hl">99999-1111</text>
+              <rect class="cell" x="15" y="88" width="90" height="34"/><rect class="cell" x="105" y="88" width="90" height="34"/><rect class="cell" x="195" y="88" width="180" height="34"/>
+              <text x="60" y="110" text-anchor="middle">2</text><text x="150" y="110" text-anchor="middle">João</text><text x="285" y="110" text-anchor="middle" class="hl">99999-1111</text>
+              <rect class="cell" x="15" y="122" width="90" height="34"/><rect class="cell" x="105" y="122" width="90" height="34"/><rect class="cell" x="195" y="122" width="180" height="34"/>
+              <text x="60" y="144" text-anchor="middle">3</text><text x="150" y="144" text-anchor="middle">João</text><text x="285" y="144" text-anchor="middle" class="hl">99999-1111</text>
+              <rect class="cell" x="15" y="156" width="90" height="34"/><rect class="cell" x="105" y="156" width="90" height="34"/><rect class="cell" x="195" y="156" width="180" height="34"/>
+              <text x="60" y="178" text-anchor="middle">4</text><text x="150" y="178" text-anchor="middle">João</text><text x="285" y="178" text-anchor="middle" class="hl">99999-1111</text>
+            </g>
+            <text x="200" y="215" text-anchor="middle" font-size="13" class="warn">⚠ mesmo dado, 4 vezes</text>
+            <text x="200" y="240" text-anchor="middle" font-size="12" class="cap">trocou o telefone? corrige nas 4 linhas</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 16 · ROTEIRO -->
+    <section class="slide">
+      <span class="tag">Roteiro</span>
+      <h2>Para onde a disciplina vai</h2>
+      <div class="cols">
+        <div class="box"><b>Fundamentos</b><br>02 PostgreSQL</div>
+        <div class="box"><b>Modelagem</b><br>03 Projeto de BD · 04 CREATE TABLE · 05 Normalização</div>
+        <div class="box"><b>SQL</b><br>06 DDL e DML · 07 DQL (SELECT, JOIN, agregação)</div>
+        <div class="box"><b>Objetos do banco</b><br>08 Triggers · 09 Views · 10 Usuários</div>
+        <div class="box"><b>Integração</b><br>11 API RESTful vs. SQL direto</div>
+      </div>
+      <div class="callout">Hoje: por que bancos relacionais existem. A partir da 03, mão na massa no PostgreSQL.</div>
+    </section>
+
+    <!-- 17 · FECHAMENTO -->
+    <section class="slide cover">
+      <img class="crest" src="assets/img/logo_univassouras.png" alt="Universidade de Vassouras">
+      <h1>Dúvidas?</h1>
+      <div class="meta">
+        Prof. Diego Ramos Inácio<br>
+        diego.inacio@univassouras.edu.br<br>
+        Curso de Engenharia de Software — Universidade de Vassouras
+      </div>
+    </section>
+
+  </div>
+
+  <div class="deck-count">1 / 17</div>
+  <div class="deck-nav">
+    <button data-prev aria-label="Slide anterior">‹</button>
+    <button data-next aria-label="Próximo slide">›</button>
+  </div>
+
+  <script src="assets/js/deck.js"></script>
+</body>
+</html>
