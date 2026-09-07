@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 08 — Triggers</title>
+  <link rel="stylesheet" href="assets/css/deck.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.15.0/mermaid.min.js"></script>
+</head>
+<body>
+
+  <div class="deck-top">
+    <span class="t">Banco de Dados Relacional · Aula 08</span>
+    <a href="index.html">← Portal</a>
+  </div>
+  <div class="deck-prog"></div>
+
+  <div class="deck">
+
+    <!-- 1 · CAPA -->
+    <section class="slide cover active">
+      <img class="crest" src="assets/img/logo_univassouras.png" alt="Universidade de Vassouras">
+      <h1>Triggers</h1>
+      <div class="meta">
+        Banco de Dados Relacional · Aula 08<br>
+        Curso de Engenharia de Software — Universidade de Vassouras<br>
+        Prof. Diego Ramos Inácio
+      </div>
+    </section>
+
+    <!-- 2 · O QUE É -->
+    <section class="slide">
+      <span class="tag">Conceito</span>
+      <h2>O que é uma trigger</h2>
+      <p>Um <b>bloco de código que o banco dispara sozinho</b> toda vez que acontece um
+      <code>INSERT</code>, <code>UPDATE</code> ou <code>DELETE</code> numa tabela.</p>
+      <div class="fig">
+        <svg viewBox="0 0 900 220" role="img" aria-label="Um evento na tabela dispara a trigger, que executa uma ação">
+          <defs><marker id="a8m2" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+          <g text-anchor="middle">
+            <rect class="box-soft" x="30" y="75" width="220" height="70" rx="10"/>
+            <text x="140" y="105" font-size="15">INSERT / UPDATE / DELETE</text>
+            <text x="140" y="127" font-size="12" class="cap">numa tabela monitorada</text>
+            <line class="ln" x1="252" y1="110" x2="340" y2="110" marker-end="url(#a8m2)"/>
+            <text x="296" y="98" font-size="12" class="hl">dispara</text>
+
+            <rect class="box" x="345" y="70" width="200" height="80" rx="10"/>
+            <text x="445" y="103" font-size="16" class="hl">TRIGGER</text>
+            <text x="445" y="127" font-size="12" class="cap">roda automaticamente</text>
+
+            <line class="ln" x1="547" y1="110" x2="635" y2="110" marker-end="url(#a8m2)"/>
+            <rect class="box-soft" x="640" y="75" width="230" height="70" rx="10"/>
+            <text x="755" y="105" font-size="15">executa uma ação</text>
+            <text x="755" y="127" font-size="12" class="cap">gravar log, validar, calcular...</text>
+          </g>
+        </svg>
+      </div>
+      <div class="callout">Ninguém "chama" a trigger — ela reage ao evento sozinha.</div>
+    </section>
+
+    <!-- 3 · PARA QUE SERVE -->
+    <section class="slide">
+      <span class="tag">Motivação</span>
+      <h2>Para que servem</h2>
+      <div class="cols">
+        <div class="box"><b>Auditoria</b><br>registrar quem alterou o quê e quando</div>
+        <div class="box"><b>Automação</b><br>preencher campos como <code>data_modificacao</code> sozinho</div>
+        <div class="box"><b>Integridade</b><br>manter tabelas relacionadas consistentes</div>
+        <div class="box"><b>Regras de negócio</b><br>bloquear uma operação inválida antes de gravar</div>
+      </div>
+    </section>
+
+    <!-- 4 · ANATOMIA -->
+    <section class="slide">
+      <span class="tag">Estrutura</span>
+      <h2>Uma trigger tem duas partes</h2>
+      <div class="fig">
+        <svg viewBox="0 0 900 240" role="img" aria-label="A função contém a lógica; o CREATE TRIGGER liga a função a uma tabela e um evento">
+          <defs><marker id="a8m4" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+          <rect class="box" x="40" y="50" width="360" height="140" rx="12"/>
+          <text x="220" y="82" text-anchor="middle" font-size="16" class="hl">1 · A FUNÇÃO (PL/pgSQL)</text>
+          <text x="220" y="112" text-anchor="middle" font-size="13">contém o que fazer</text>
+          <text x="220" y="136" text-anchor="middle" font-size="12" class="cap">RETURNS TRIGGER · usa NEW/OLD</text>
+          <text x="220" y="160" text-anchor="middle" font-size="12" class="cap">termina com RETURN NEW;</text>
+
+          <line class="ln" x1="405" y1="120" x2="495" y2="120" marker-end="url(#a8m4)"/>
+          <text x="450" y="108" text-anchor="middle" font-size="12" class="hl">ligada por</text>
+
+          <rect class="box" x="500" y="50" width="360" height="140" rx="12"/>
+          <text x="680" y="82" text-anchor="middle" font-size="16" class="hl">2 · O CREATE TRIGGER</text>
+          <text x="680" y="112" text-anchor="middle" font-size="13">quando chamar a função</text>
+          <text x="680" y="136" text-anchor="middle" font-size="12" class="cap">momento (BEFORE/AFTER)</text>
+          <text x="680" y="160" text-anchor="middle" font-size="12" class="cap">evento + tabela + FOR EACH ROW</text>
+        </svg>
+      </div>
+    </section>
+
+    <!-- 5 · MOMENTO -->
+    <section class="slide">
+      <span class="tag">Momento</span>
+      <h2>BEFORE, AFTER e INSTEAD OF</h2>
+      <table>
+        <tr><th>Momento</th><th>Roda</th><th>Serve para</th></tr>
+        <tr><td><code>BEFORE</code></td><td>antes de gravar</td><td>validar, <b>bloquear</b> ou ajustar <code>NEW</code></td></tr>
+        <tr><td><code>AFTER</code></td><td>depois de gravar</td><td><b>log / auditoria</b>, atualizar outra tabela</td></tr>
+        <tr><td><code>INSTEAD OF</code></td><td>no lugar da operação</td><td>tornar uma <em>view</em> "gravável"</td></tr>
+      </table>
+      <div class="callout">Regra prática: <b>validou/mudou o dado</b> → <code>BEFORE</code>. <b>Reagiu ao que já foi gravado</b> → <code>AFTER</code>.</div>
+    </section>
+
+    <!-- 6 · EVENTO E ESCOPO -->
+    <section class="slide">
+      <span class="tag">Evento e escopo</span>
+      <h2>O que dispara e com que frequência</h2>
+      <div class="cols">
+        <div class="box">
+          <b>Evento</b><br>
+          <code>INSERT</code> · <code>UPDATE</code> · <code>DELETE</code><br>
+          (pode combinar: <code>AFTER INSERT OR UPDATE</code>)
+        </div>
+        <div class="box">
+          <b>FOR EACH ROW</b><br>
+          roda <b>uma vez por linha</b> afetada. É o que quase sempre se usa.
+        </div>
+        <div class="box">
+          <b>FOR EACH STATEMENT</b><br>
+          roda <b>uma vez por comando</b>, mesmo que ele afete 1000 linhas.
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 · NEW E OLD -->
+    <section class="slide">
+      <span class="tag">Dentro da função</span>
+      <h2>NEW e OLD — os dados da linha</h2>
+      <div class="split">
+        <div>
+          <p>A função recebe registros especiais:</p>
+          <table>
+            <tr><th>Evento</th><th>OLD</th><th>NEW</th></tr>
+            <tr><td>INSERT</td><td>—</td><td>a linha nova</td></tr>
+            <tr><td>UPDATE</td><td>valores antigos</td><td>valores propostos</td></tr>
+            <tr><td>DELETE</td><td>a linha apagada</td><td>—</td></tr>
+          </table>
+          <p>Acesso por coluna: <code>NEW.preco</code>, <code>OLD.status</code>.</p>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 360 240" role="img" aria-label="Num UPDATE, OLD tem os valores antigos e NEW os novos">
+            <text x="180" y="26" text-anchor="middle" font-size="13" class="cap">UPDATE preco: 100 → 120</text>
+            <rect class="box-soft" x="30" y="50" width="140" height="80" rx="10"/>
+            <text x="100" y="80" text-anchor="middle" font-size="15" class="hl">OLD</text>
+            <text x="100" y="108" text-anchor="middle" font-size="14">preco = 100</text>
+            <rect class="box" x="190" y="50" width="140" height="80" rx="10"/>
+            <text x="260" y="80" text-anchor="middle" font-size="15" class="hl">NEW</text>
+            <text x="260" y="108" text-anchor="middle" font-size="14">preco = 120</text>
+            <text x="180" y="170" text-anchor="middle" font-size="12" class="cap">a diferença entre os dois = o que mudou</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8 · BANCO DE TESTE -->
+    <section class="slide">
+      <span class="tag">Exemplo do dia</span>
+      <h2>O banco de vendas</h2>
+      <div class="mermaid">
+erDiagram
+    VENDEDOR ||--o{ VENDAS : "realiza"
+    PRODUTO  ||--o{ VENDAS : "vendido em"
+    VENDAS   ||..o{ LOG_VENDAS : "referência lógica"
+    VENDEDOR {
+        int id_vendedor PK
+        string nome
+    }
+    PRODUTO {
+        int id_produto PK
+        string nome
+        numeric preco
+    }
+    VENDAS {
+        int id_venda PK
+        int id_vendedor FK
+        int id_produto FK
+        int quantidade
+        timestamp data_venda
+    }
+    LOG_VENDAS {
+        int id_log PK
+        int id_venda "sem FK"
+        int id_vendedor "sem FK"
+        string nome_vendedor "snapshot"
+        int quantidade
+        timestamp data_log
+    }
+      </div>
+      <p class="cap" style="text-align:center"><code>log_vendas</code> não tem FK e só recebe dados <b>pela trigger</b> — por quê no próximo slide.</p>
+    </section>
+
+    <!-- 9 · A FUNÇÃO -->
+    <section class="slide">
+      <span class="tag">Passo 1 · a função</span>
+      <h2>A função log_venda()</h2>
+      <pre><code>CREATE OR REPLACE FUNCTION log_venda()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_nome vendedor.nome%TYPE;
+BEGIN
+    SELECT nome INTO v_nome
+    FROM   vendedor WHERE id_vendedor = NEW.id_vendedor;
+
+    INSERT INTO log_vendas
+        (id_venda, id_vendedor, nome_vendedor, quantidade, data_log)
+    VALUES
+        (NEW.id_venda, NEW.id_vendedor, v_nome, NEW.quantidade, NOW());
+
+    RETURN NEW;    -- obrigatório; devolve a linha sem alterar
+END;
+$$ LANGUAGE plpgsql;</code></pre>
+      <div class="callout">A função <b>não recebe parâmetros</b> e <b>retorna <code>TRIGGER</code></b>.
+      Além dos IDs, ela grava o <b>nome do vendedor da época</b> (snapshot).</div>
+    </section>
+
+    <!-- 10 · BOAS PRÁTICAS DA TABELA DE LOG -->
+    <section class="slide">
+      <span class="tag">Boas práticas</span>
+      <h2>Como projetar a tabela de log</h2>
+      <div class="cols">
+        <div class="box"><b>Sem FK</b><br>a referência é <b>lógica</b> (<code>int</code>, não <code>REFERENCES</code>). O log tem que sobreviver se a venda for apagada.</div>
+        <div class="box"><b>Snapshot dos valores</b><br>guarde também o que era na hora (<code>nome_vendedor</code>, <code>valor</code>) — o log continua legível mesmo se a origem mudar.</div>
+        <div class="box"><b>Append-only</b><br>só a trigger insere. <code>REVOKE UPDATE, DELETE ON log_vendas FROM ...</code> — ninguém edita ou apaga.</div>
+        <div class="box"><b>Nunca deleta linha de log</b><br>uma tabela de auditoria só cresce. Se precisar liberar espaço, arquiva — não apaga.</div>
+      </div>
+      <div class="callout">FK com <code>ON DELETE CASCADE</code> num log <b>destrói a auditoria</b>: apagou a venda, sumiu o registro dela.</div>
+    </section>
+
+    <!-- 10 · O CREATE TRIGGER -->
+    <section class="slide">
+      <span class="tag">Passo 2 · o gatilho</span>
+      <h2>Ligando a função à tabela</h2>
+      <p>O <code>CREATE TRIGGER</code> não tem lógica nenhuma — ele só diz <b>quando</b> o banco
+      deve chamar a função que você criou no passo 1.</p>
+      <div class="fig">
+        <svg viewBox="0 0 980 300" role="img" aria-label="Partes do comando CREATE TRIGGER: momento e evento, tabela, escopo por linha e função">
+          <defs><marker id="a8m10" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+          <rect x="210" y="60" width="560" height="180" rx="10" fill="rgba(0,0,0,.32)" stroke="#d4a94e" stroke-width="1.4"/>
+          <g font-family="Consolas,monospace" font-size="18">
+            <text x="235" y="100" fill="#f6f0e4">CREATE TRIGGER</text>
+            <text x="420" y="100" fill="#d4a94e">trg_log_venda</text>
+
+            <text x="255" y="150" fill="#e7a33e">AFTER INSERT</text>
+            <text x="405" y="150" fill="#f6f0e4">ON</text>
+            <text x="445" y="150" fill="#d4a94e">vendas</text>
+
+            <text x="255" y="200" fill="#9ed0a0">FOR EACH ROW</text>
+            <text x="430" y="200" fill="#f6f0e4">EXECUTE FUNCTION</text>
+            <text x="640" y="200" fill="#d4a94e">log_venda();</text>
+          </g>
+
+          <text x="95" y="144" text-anchor="middle" font-size="14">momento</text>
+          <text x="95" y="162" text-anchor="middle" font-size="14">+ evento</text>
+          <line class="ln" x1="150" y1="153" x2="250" y2="153" marker-end="url(#a8m10)"/>
+
+          <text x="860" y="157" text-anchor="middle" font-size="14">tabela monitorada</text>
+          <line class="ln" x1="812" y1="148" x2="518" y2="148" marker-end="url(#a8m10)"/>
+
+          <line class="ln" x1="322" y1="282" x2="322" y2="212" marker-end="url(#a8m10)"/>
+          <text x="322" y="300" text-anchor="middle" font-size="14">uma vez por linha</text>
+
+          <line class="ln" x1="690" y1="282" x2="690" y2="212" marker-end="url(#a8m10)"/>
+          <text x="690" y="300" text-anchor="middle" font-size="14">função a executar</text>
+        </svg>
+      </div>
+      <div class="callout">Nome por convenção começa com <code>trg_</code>. Para remover:
+      <code>DROP TRIGGER trg_log_venda ON vendas;</code></div>
+    </section>
+
+    <!-- 11 · EM AÇÃO -->
+    <section class="slide">
+      <span class="tag">Funcionando</span>
+      <h2>Em ação</h2>
+      <div class="fig">
+        <svg viewBox="0 0 900 280" role="img" aria-label="INSERT em vendas dispara a trigger AFTER INSERT que grava uma linha em log_vendas">
+          <defs><marker id="a8m11" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+          <rect class="box-soft" x="30" y="30" width="260" height="50" rx="8"/>
+          <text x="160" y="60" text-anchor="middle" font-size="13">INSERT INTO vendas (...) VALUES (...)</text>
+          <line class="ln" x1="160" y1="80" x2="160" y2="120" marker-end="url(#a8m11)"/>
+
+          <g text-anchor="middle">
+            <rect class="head" x="40" y="120" width="240" height="26"/>
+            <rect class="cell" x="40" y="120" width="70" height="26"/><rect class="cell" x="110" y="120" width="90" height="26"/><rect class="cell" x="200" y="120" width="80" height="26"/>
+            <text x="75" y="138" font-size="12" class="hl">id_venda</text><text x="155" y="138" font-size="12" class="hl">id_vend</text><text x="240" y="138" font-size="12" class="hl">qtd</text>
+            <rect class="cell" x="40" y="146" width="70" height="26"/><rect class="cell" x="110" y="146" width="90" height="26"/><rect class="cell" x="200" y="146" width="80" height="26"/>
+            <text x="75" y="164" font-size="12">7</text><text x="155" y="164" font-size="12">3</text><text x="240" y="164" font-size="12">5</text>
+            <text x="160" y="192" font-size="12" class="cap">gravou em vendas</text>
+          </g>
+
+          <line class="ln" x1="285" y1="150" x2="400" y2="150" marker-end="url(#a8m11)"/>
+          <rect class="box" x="405" y="120" width="150" height="60" rx="8"/>
+          <text x="480" y="146" text-anchor="middle" font-size="13" class="hl">AFTER INSERT</text>
+          <text x="480" y="166" text-anchor="middle" font-size="12" class="cap">log_venda()</text>
+          <line class="ln" x1="557" y1="150" x2="620" y2="150" marker-end="url(#a8m11)"/>
+
+          <g text-anchor="middle">
+            <rect class="head" x="625" y="120" width="250" height="26"/>
+            <rect class="cell" x="625" y="120" width="60" height="26"/><rect class="cell" x="685" y="120" width="70" height="26"/><rect class="cell" x="755" y="120" width="120" height="26"/>
+            <text x="655" y="138" font-size="12" class="hl">id_log</text><text x="720" y="138" font-size="12" class="hl">id_venda</text><text x="815" y="138" font-size="12" class="hl">data_log</text>
+            <rect class="cell" x="625" y="146" width="60" height="26"/><rect class="cell" x="685" y="146" width="70" height="26"/><rect class="cell" x="755" y="146" width="120" height="26"/>
+            <text x="655" y="164" font-size="12" class="hl">1</text><text x="720" y="164" font-size="12" class="hl">7</text><text x="815" y="164" font-size="12" class="hl">agora</text>
+            <text x="750" y="192" font-size="12" class="cap">linha criada pela trigger</text>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <!-- 12 · BEFORE + RAISE -->
+    <section class="slide">
+      <span class="tag">BEFORE · bloquear</span>
+      <h2>Impedir uma operação inválida</h2>
+      <div class="split">
+        <div>
+          <pre><code>CREATE OR REPLACE FUNCTION checa_estoque()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.quantidade &gt; (SELECT estoque FROM produto
+                          WHERE id_produto = NEW.id_produto) THEN
+        RAISE EXCEPTION 'Estoque insuficiente para o produto %',
+                        NEW.id_produto;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_checa_estoque
+BEFORE INSERT ON vendas
+FOR EACH ROW EXECUTE FUNCTION checa_estoque();</code></pre>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 360 240" role="img" aria-label="Trigger BEFORE dispara RAISE EXCEPTION e nada é gravado">
+            <defs><marker id="a8m12" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+            <rect class="box-soft" x="30" y="30" width="180" height="40" rx="8"/>
+            <text x="120" y="55" text-anchor="middle" font-size="12">INSERT venda (qtd 999)</text>
+            <line class="ln" x1="120" y1="70" x2="120" y2="100" marker-end="url(#a8m12)"/>
+            <rect class="box" x="40" y="100" width="160" height="44" rx="8"/>
+            <text x="120" y="127" text-anchor="middle" font-size="12" class="hl">BEFORE · checa_estoque()</text>
+            <line class="ln" x1="120" y1="144" x2="120" y2="172" marker-end="url(#a8m12)"/>
+            <rect x="35" y="172" width="170" height="40" fill="none" stroke="#e06a54" stroke-width="2"/>
+            <text x="120" y="197" text-anchor="middle" font-size="12" fill="#e06a54">RAISE EXCEPTION → nada grava</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 13 · UPDATE TRIGGER -->
+    <section class="slide">
+      <span class="tag">UPDATE · OLD e NEW</span>
+      <h2>Registrar o que mudou</h2>
+      <pre><code>CREATE OR REPLACE FUNCTION log_preco()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.preco &lt;&gt; OLD.preco THEN           -- só se o preço realmente mudou
+        INSERT INTO log_preco (id_produto, preco_antigo, preco_novo, data_log)
+        VALUES (OLD.id_produto, OLD.preco, NEW.preco, NOW());
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_log_preco
+AFTER UPDATE ON produto
+FOR EACH ROW EXECUTE FUNCTION log_preco();</code></pre>
+    </section>
+
+    <!-- 14 · CUIDADOS -->
+    <section class="slide">
+      <span class="tag">Cuidados</span>
+      <h2>Onde as triggers mordem</h2>
+      <div class="cols">
+        <div class="box"><b>Desempenho</b><br>rodam a <b>cada linha</b> — um <code>INSERT</code> de 10 mil linhas dispara 10 mil vezes.</div>
+        <div class="box"><b>Lógica escondida</b><br>o comando "simples" faz mais do que parece — difícil de depurar.</div>
+        <div class="box"><b>Recursão</b><br>trigger em A que mexe em B, que tem trigger que mexe em A → loop.</div>
+        <div class="box"><b>Manutenção</b><br>poucas, com nome claro (<code>trg_...</code>) e comentadas.</div>
+      </div>
+    </section>
+
+    <!-- 15 · QUANDO USAR -->
+    <section class="slide">
+      <span class="tag">Resumo</span>
+      <h2>Trigger ou outra coisa?</h2>
+      <table>
+        <tr><th>Necessidade</th><th>Ferramenta</th></tr>
+        <tr><td>valor obrigatório / padrão / faixa simples</td><td><code>NOT NULL</code>, <code>DEFAULT</code>, <code>CHECK</code></td></tr>
+        <tr><td>regra que depende da aplicação / usuário logado</td><td>código da aplicação</td></tr>
+        <tr><td><b>auditoria</b> e <b>consistência entre tabelas</b>, sempre, venha de onde vier</td><td><b>trigger</b></td></tr>
+      </table>
+      <div class="callout">Trigger é para o que precisa acontecer <b>independente de quem</b> fez a operação.</div>
+    </section>
+
+    <!-- 16 · PENSE -->
+    <section class="slide">
+      <span class="tag">Pergunta pra pensar</span>
+      <h2>Antes da próxima aula</h2>
+      <div class="split">
+        <div>
+          <p>Um banco tem <code>conta(id, titular, saldo)</code> e
+          <code>movimento(id, id_conta, tipo, valor, data)</code>. A área de <em>compliance</em>
+          quer registrar automaticamente todo <b>depósito acima de R$ 5.000</b> numa tabela
+          <code>log_deposito</code>.</p>
+          <ul>
+            <li><code>BEFORE</code> ou <code>AFTER</code>? Em qual tabela?</li>
+            <li>Que condição vai dentro do <code>IF</code>?</li>
+            <li>Escreva a função e o <code>CREATE TRIGGER</code>.</li>
+          </ul>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 360 220" role="img" aria-label="movimento gera log_deposito quando o valor passa de 5000">
+            <defs><marker id="a8m16" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+            <rect class="box-soft" x="30" y="90" width="130" height="46" rx="8"/>
+            <text x="95" y="118" text-anchor="middle" font-size="13" class="hl">movimento</text>
+            <line class="ln" x1="162" y1="113" x2="222" y2="113" marker-end="url(#a8m16)"/>
+            <text x="192" y="102" text-anchor="middle" font-size="10" class="cap">valor &gt; 5000</text>
+            <rect class="box-soft" x="224" y="90" width="130" height="46" rx="8"/>
+            <text x="289" y="118" text-anchor="middle" font-size="12" class="hl">log_deposito</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 17 · FECHAMENTO -->
+    <section class="slide cover">
+      <img class="crest" src="assets/img/logo_univassouras.png" alt="Universidade de Vassouras">
+      <h1>Dúvidas?</h1>
+      <div class="meta">
+        Prof. Diego Ramos Inácio<br>
+        diego.inacio@univassouras.edu.br<br>
+        Curso de Engenharia de Software — Universidade de Vassouras
+      </div>
+    </section>
+
+  </div>
+
+  <div class="deck-count">1 / 18</div>
+  <div class="deck-nav">
+    <button data-prev aria-label="Slide anterior">‹</button>
+    <button data-next aria-label="Próximo slide">›</button>
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'base',
+      themeVariables: {
+        fontFamily: '"Segoe UI", Tahoma, sans-serif',
+        fontSize: '15px',
+        primaryColor: '#f3e0e0',
+        primaryBorderColor: '#7a1f1f',
+        primaryTextColor: '#2c2320',
+        lineColor: '#7a1f1f',
+        textColor: '#2c2320'
+      }
+    });
+  </script>
+  <script src="assets/js/deck.js"></script>
+</body>
+</html>
