@@ -15,6 +15,7 @@ gabarito*
 *Gabarito*
 
 # --- Originais de aula (mantidos localmente, fora do site) ---
+/_pptx/
 *.pptx
 *.ppt
 *.docx
