@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 07 — SQL: DQL (Consultas)</title>
+  <link rel="stylesheet" href="assets/css/deck.css">
+</head>
+<body>
+
+  <div class="deck-top">
+    <span class="t">Banco de Dados Relacional · Aula 07</span>
+    <a href="index.html">← Portal</a>
+  </div>
+  <div class="deck-prog"></div>
+
+  <div class="deck">
+
+    <!-- 1 · CAPA -->
+    <section class="slide cover active">
+      <img class="crest" src="assets/img/logo_univassouras.png" alt="Universidade de Vassouras">
+      <h1>SQL — DQL: Consultas</h1>
+      <div class="meta">
+        Banco de Dados Relacional · Aula 07<br>
+        Curso de Engenharia de Software — Universidade de Vassouras<br>
+        Prof. Diego Ramos Inácio
+      </div>
+    </section>
+
+    <!-- 2 · O DATASET -->
+    <section class="slide">
+      <span class="tag">Nosso exemplo</span>
+      <h2>Duas tabelas para a aula toda</h2>
+      <div class="cols">
+        <div class="box">
+          <b>cliente</b>
+          <table>
+            <tr><th>id</th><th>nome</th><th>cidade</th></tr>
+            <tr><td>1</td><td>Ana</td><td>SP</td></tr>
+            <tr><td>2</td><td>Beto</td><td>RJ</td></tr>
+            <tr><td>3</td><td>Carla</td><td>SP</td></tr>
+            <tr><td>4</td><td>Davi</td><td>MG</td></tr>
+          </table>
+        </div>
+        <div class="box">
+          <b>pedido</b>
+          <table>
+            <tr><th>id</th><th>id_cliente</th><th>valor</th><th>status</th></tr>
+            <tr><td>10</td><td>1</td><td>300</td><td>pago</td></tr>
+            <tr><td>11</td><td>1</td><td>150</td><td>pendente</td></tr>
+            <tr><td>12</td><td>2</td><td>500</td><td>pago</td></tr>
+            <tr><td>13</td><td>3</td><td>200</td><td>pago</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="callout">Davi (id 4) <b>não tem pedido</b> — vamos usar isso no LEFT JOIN.</div>
+    </section>
+
+    <!-- 3 · SELECT / FROM -->
+    <section class="slide">
+      <span class="tag">DQL · SELECT</span>
+      <h2>SELECT — escolher colunas</h2>
+      <div class="split">
+        <div>
+          <pre><code>SELECT nome, cidade
+FROM   cliente;</code></pre>
+          <p><code>SELECT *</code> traz <b>todas</b> as colunas; nomeando as colunas você traz
+          só o que precisa (mais claro e mais rápido).</p>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 380 260" role="img" aria-label="SELECT escolhe um subconjunto das colunas">
+            <defs><marker id="a7m3" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+            <g font-size="11" text-anchor="middle">
+              <rect class="head" x="10" y="30" width="150" height="26"/>
+              <rect class="cell" x="10" y="30" width="30" height="26"/><rect class="cell" x="40" y="30" width="60" height="26"/><rect class="cell" x="100" y="30" width="60" height="26"/>
+              <text x="25" y="47">id</text><text x="70" y="47">nome</text><text x="130" y="47" class="hl">cidade</text>
+              <rect class="cell" x="10" y="56" width="30" height="24"/><rect class="cell" x="40" y="56" width="60" height="24"/><rect class="cell" x="100" y="56" width="60" height="24"/>
+              <text x="25" y="72">1</text><text x="70" y="72">Ana</text><text x="130" y="72">SP</text>
+            </g>
+            <line class="ln" x1="170" y1="55" x2="215" y2="55" marker-end="url(#a7m3)"/>
+            <g font-size="11" text-anchor="middle">
+              <rect class="head" x="220" y="30" width="140" height="26"/>
+              <rect class="cell" x="220" y="30" width="70" height="26"/><rect class="cell" x="290" y="30" width="70" height="26"/>
+              <text x="255" y="47" class="hl">nome</text><text x="325" y="47" class="hl">cidade</text>
+              <rect class="cell" x="220" y="56" width="70" height="24"/><rect class="cell" x="290" y="56" width="70" height="24"/>
+              <text x="255" y="72">Ana</text><text x="325" y="72">SP</text>
+            </g>
+            <text x="185" y="120" text-anchor="middle" font-size="12" class="cap">menos colunas · mesmas linhas</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 · WHERE -->
+    <section class="slide">
+      <span class="tag">DQL · WHERE</span>
+      <h2>WHERE — filtrar linhas</h2>
+      <div class="split">
+        <div>
+          <pre><code>SELECT nome, cidade
+FROM   cliente
+WHERE  cidade = 'SP';</code></pre>
+          <p>Operadores: <code>=</code> <code>&lt;&gt;</code> <code>&gt;</code> <code>&lt;</code>
+          <code>BETWEEN</code> <code>IN (...)</code> <code>LIKE 'A%'</code> <code>IS NULL</code>
+          — combinados com <code>AND</code> / <code>OR</code>.</p>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 360 280" role="img" aria-label="WHERE cidade = SP mantém só Ana e Carla">
+            <g font-size="12" text-anchor="middle">
+              <rect class="head" x="30" y="20" width="200" height="28"/>
+              <rect class="cell" x="30" y="20" width="120" height="28"/><rect class="cell" x="150" y="20" width="80" height="28"/>
+              <text x="90" y="39">nome</text><text x="190" y="39" class="hl">cidade</text>
+              <rect class="cell" x="30" y="48" width="120" height="28"/><rect class="cell" x="150" y="48" width="80" height="28"/>
+              <text x="90" y="67">Ana</text><text x="190" y="67" class="hl">SP</text>
+              <rect x="30" y="76" width="200" height="28" fill="none" stroke="#e06a54" stroke-width="2"/>
+              <text x="90" y="95" fill="#e06a54">Beto</text><text x="190" y="95" fill="#e06a54">RJ</text>
+              <rect class="cell" x="30" y="104" width="120" height="28"/><rect class="cell" x="150" y="104" width="80" height="28"/>
+              <text x="90" y="123">Carla</text><text x="190" y="123" class="hl">SP</text>
+              <rect x="30" y="132" width="200" height="28" fill="none" stroke="#e06a54" stroke-width="2"/>
+              <text x="90" y="151" fill="#e06a54">Davi</text><text x="190" y="151" fill="#e06a54">MG</text>
+            </g>
+            <text x="130" y="195" text-anchor="middle" font-size="12" class="cap">restam 2 linhas</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 · ORDER BY -->
+    <section class="slide">
+      <span class="tag">DQL · ORDER BY</span>
+      <h2>ORDER BY — ordenar o resultado</h2>
+      <div class="split">
+        <div>
+          <pre><code>SELECT id, valor
+FROM   pedido
+ORDER BY valor DESC;   -- ASC é o padrão</code></pre>
+          <p>Pode ordenar por <b>várias colunas</b>: <code>ORDER BY cidade ASC, valor DESC</code>.</p>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 360 260" role="img" aria-label="ORDER BY valor DESC coloca 500, 300, 200, 150">
+            <g font-size="12" text-anchor="middle">
+              <text x="80" y="24" class="cap">antes</text>
+              <rect class="cell" x="30" y="32" width="100" height="26"/><text x="80" y="50">300</text>
+              <rect class="cell" x="30" y="58" width="100" height="26"/><text x="80" y="76">150</text>
+              <rect class="cell" x="30" y="84" width="100" height="26"/><text x="80" y="102">500</text>
+              <rect class="cell" x="30" y="110" width="100" height="26"/><text x="80" y="128">200</text>
+              <text x="280" y="24" class="cap">depois (DESC)</text>
+              <rect class="cell" x="230" y="32" width="100" height="26"/><text x="280" y="50" class="hl">500</text>
+              <rect class="cell" x="230" y="58" width="100" height="26"/><text x="280" y="76">300</text>
+              <rect class="cell" x="230" y="84" width="100" height="26"/><text x="280" y="102">200</text>
+              <rect class="cell" x="230" y="110" width="100" height="26"/><text x="280" y="128">150</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 · LIMIT / DISTINCT -->
+    <section class="slide">
+      <span class="tag">DQL</span>
+      <h2>LIMIT e DISTINCT</h2>
+      <div class="cols">
+        <div class="box">
+          <b>LIMIT — só as primeiras N linhas</b>
+          <pre><code>SELECT nome, valor
+FROM   pedido
+ORDER BY valor DESC
+LIMIT 3;</code></pre>
+          "os 3 maiores pedidos"
+        </div>
+        <div class="box">
+          <b>DISTINCT — valores sem repetição</b>
+          <pre><code>SELECT DISTINCT cidade
+FROM   cliente;
+-- SP, RJ, MG  (SP aparece 1 vez)</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 · AGREGAÇÃO -->
+    <section class="slide">
+      <span class="tag">DQL · Agregação</span>
+      <h2>Funções que resumem uma coluna</h2>
+      <div class="split">
+        <div>
+          <table>
+            <tr><th>Função</th><th>Faz</th></tr>
+            <tr><td><code>COUNT(*)</code></td><td>conta linhas</td></tr>
+            <tr><td><code>SUM(col)</code></td><td>soma</td></tr>
+            <tr><td><code>AVG(col)</code></td><td>média</td></tr>
+            <tr><td><code>MIN</code> / <code>MAX</code></td><td>menor / maior</td></tr>
+          </table>
+          <pre><code>SELECT COUNT(*), SUM(valor), AVG(valor)
+FROM   pedido;
+-- 4      1150         287.50</code></pre>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 340 260" role="img" aria-label="A coluna valor inteira vira um único número com SUM">
+            <defs><marker id="a7m7" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+            <g font-size="13" text-anchor="middle">
+              <rect class="head" x="30" y="20" width="90" height="26"/><text x="75" y="38" class="hl">valor</text>
+              <rect class="cell" x="30" y="46" width="90" height="26"/><text x="75" y="64">300</text>
+              <rect class="cell" x="30" y="72" width="90" height="26"/><text x="75" y="90">150</text>
+              <rect class="cell" x="30" y="98" width="90" height="26"/><text x="75" y="116">500</text>
+              <rect class="cell" x="30" y="124" width="90" height="26"/><text x="75" y="142">200</text>
+            </g>
+            <line class="ln" x1="128" y1="85" x2="185" y2="85" marker-end="url(#a7m7)"/>
+            <text x="156" y="72" text-anchor="middle" font-size="12" class="hl">SUM</text>
+            <rect class="box" x="190" y="62" width="120" height="46" rx="8"/>
+            <text x="250" y="90" text-anchor="middle" font-size="17" class="hl">1150</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8 · GROUP BY -->
+    <section class="slide">
+      <span class="tag">DQL · GROUP BY</span>
+      <h2>GROUP BY — resumir por categoria</h2>
+      <p>Junta as linhas que têm o mesmo valor numa coluna e aplica a agregação em <b>cada grupo</b>.</p>
+      <div class="fig">
+        <svg viewBox="0 0 900 300" role="img" aria-label="Pedidos agrupados por status: pago e pendente, com contagem e soma de cada grupo">
+          <defs><marker id="a7m8" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+          <g font-size="13" text-anchor="middle">
+            <text x="110" y="30" class="cap">pedido</text>
+            <rect class="cell" x="40" y="40" width="140" height="28"/><text x="110" y="59">300 · pago</text>
+            <rect class="cell" x="40" y="68" width="140" height="28"/><text x="110" y="87">150 · pendente</text>
+            <rect class="cell" x="40" y="96" width="140" height="28"/><text x="110" y="115">500 · pago</text>
+            <rect class="cell" x="40" y="124" width="140" height="28"/><text x="110" y="143">200 · pago</text>
+
+            <line class="ln" x1="185" y1="95" x2="300" y2="70" marker-end="url(#a7m8)"/>
+            <line class="ln" x1="185" y1="95" x2="300" y2="180" marker-end="url(#a7m8)"/>
+            <text x="240" y="70" font-size="12" class="hl">GROUP BY status</text>
+
+            <rect class="box" x="305" y="40" width="220" height="70" rx="8"/>
+            <text x="415" y="66" class="hl">grupo "pago"</text>
+            <text x="415" y="90" font-size="12">300 · 500 · 200</text>
+            <rect class="box" x="305" y="150" width="220" height="70" rx="8"/>
+            <text x="415" y="176" class="hl">grupo "pendente"</text>
+            <text x="415" y="200" font-size="12">150</text>
+
+            <line class="ln" x1="527" y1="75" x2="620" y2="75" marker-end="url(#a7m8)"/>
+            <line class="ln" x1="527" y1="185" x2="620" y2="185" marker-end="url(#a7m8)"/>
+
+            <rect class="head" x="625" y="55" width="240" height="26"/>
+            <rect class="cell" x="625" y="55" width="90" height="26"/><rect class="cell" x="715" y="55" width="70" height="26"/><rect class="cell" x="785" y="55" width="80" height="26"/>
+            <text x="670" y="73" class="hl">status</text><text x="750" y="73" class="hl">qtd</text><text x="825" y="73" class="hl">soma</text>
+            <rect class="cell" x="625" y="81" width="90" height="26"/><rect class="cell" x="715" y="81" width="70" height="26"/><rect class="cell" x="785" y="81" width="80" height="26"/>
+            <text x="670" y="99">pago</text><text x="750" y="99">3</text><text x="825" y="99">1000</text>
+            <rect class="cell" x="625" y="165" width="90" height="26"/><rect class="cell" x="715" y="165" width="70" height="26"/><rect class="cell" x="785" y="165" width="80" height="26"/>
+            <text x="670" y="183">pendente</text><text x="750" y="183">1</text><text x="825" y="183">150</text>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <!-- 9 · GROUP BY EXEMPLO -->
+    <section class="slide">
+      <span class="tag">DQL · GROUP BY</span>
+      <h2>Uma linha por grupo</h2>
+      <div class="split">
+        <div>
+          <pre><code>SELECT status,
+       COUNT(*)   AS qtd,
+       SUM(valor) AS total
+FROM   pedido
+GROUP BY status;</code></pre>
+          <p class="cap">Regra: toda coluna do <code>SELECT</code> que <b>não</b> é agregação
+          precisa estar no <code>GROUP BY</code>.</p>
+        </div>
+        <div>
+          <table>
+            <tr><th>status</th><th>qtd</th><th>total</th></tr>
+            <tr><td>pago</td><td>3</td><td>1000</td></tr>
+            <tr><td>pendente</td><td>1</td><td>150</td></tr>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10 · HAVING -->
+    <section class="slide">
+      <span class="tag">DQL · HAVING</span>
+      <h2>WHERE × HAVING</h2>
+      <div class="fig">
+        <svg viewBox="0 0 900 220" role="img" aria-label="WHERE filtra antes de agrupar, HAVING filtra depois">
+          <defs><marker id="a7m10" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+          <g text-anchor="middle">
+            <rect class="box-soft" x="30" y="80" width="150" height="60" rx="10"/><text x="105" y="115" font-size="14">linhas</text>
+            <line class="ln" x1="182" y1="110" x2="255" y2="110" marker-end="url(#a7m10)"/>
+            <text x="218" y="98" font-size="12" class="hl">WHERE</text>
+            <rect class="box" x="260" y="80" width="170" height="60" rx="10"/><text x="345" y="108" font-size="14">GROUP BY</text><text x="345" y="128" font-size="11" class="cap">forma os grupos</text>
+            <line class="ln" x1="432" y1="110" x2="505" y2="110" marker-end="url(#a7m10)"/>
+            <text x="468" y="98" font-size="12" class="hl">HAVING</text>
+            <rect class="box-soft" x="510" y="80" width="170" height="60" rx="10"/><text x="595" y="115" font-size="14">grupos filtrados</text>
+            <line class="ln" x1="682" y1="110" x2="755" y2="110" marker-end="url(#a7m10)"/>
+            <rect class="box-soft" x="760" y="80" width="120" height="60" rx="10"/><text x="820" y="115" font-size="14">resultado</text>
+          </g>
+        </svg>
+      </div>
+      <pre><code>SELECT status, SUM(valor) AS total
+FROM   pedido
+GROUP BY status
+HAVING SUM(valor) &gt; 500;     -- só o grupo 'pago' (1000)</code></pre>
+    </section>
+
+    <!-- 11 · O PROBLEMA DO JOIN -->
+    <section class="slide">
+      <span class="tag">DQL · JOIN</span>
+      <h2>Os dados estão em duas tabelas</h2>
+      <div class="split">
+        <div>
+          <p>O <b>nome</b> do cliente está em <code>cliente</code>. O <b>valor</b> do pedido
+          está em <code>pedido</code>. A pergunta "quanto a Ana gastou?" precisa das <b>duas</b>.</p>
+          <p>A ligação: <code>pedido.id_cliente</code> = <code>cliente.id</code>.</p>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 380 240" role="img" aria-label="pedido.id_cliente aponta para cliente.id">
+            <defs><marker id="a7m11" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+            <rect class="box" x="30" y="40" width="150" height="46" rx="8"/>
+            <text x="105" y="60" text-anchor="middle" font-size="13" class="hl">cliente</text>
+            <text x="105" y="78" text-anchor="middle" font-size="11">id · nome · cidade</text>
+            <rect class="box" x="200" y="150" width="160" height="46" rx="8"/>
+            <text x="280" y="170" text-anchor="middle" font-size="13" class="hl">pedido</text>
+            <text x="280" y="188" text-anchor="middle" font-size="11">id · id_cliente · valor</text>
+            <path class="ln" d="M240,150 C240,110 150,105 110,88" marker-end="url(#a7m11)"/>
+            <text x="255" y="120" font-size="11" class="cap">id_cliente → id</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 · INNER JOIN -->
+    <section class="slide">
+      <span class="tag">DQL · JOIN</span>
+      <h2>INNER JOIN — casar as linhas</h2>
+      <div class="fig">
+        <svg viewBox="0 0 900 300" role="img" aria-label="INNER JOIN combina cada pedido com o cliente correspondente pela chave">
+          <defs><marker id="a7m12" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="rgba(255,255,255,.5)"/></marker></defs>
+          <g font-size="12" text-anchor="middle">
+            <text x="90" y="26" class="cap">cliente</text>
+            <rect class="cell" x="30" y="34" width="120" height="26"/><text x="90" y="52">1 · Ana</text>
+            <rect class="cell" x="30" y="60" width="120" height="26"/><text x="90" y="78">2 · Beto</text>
+            <rect class="cell" x="30" y="86" width="120" height="26"/><text x="90" y="104">3 · Carla</text>
+            <rect x="30" y="112" width="120" height="26" fill="none" stroke="#e06a54" stroke-width="2"/><text x="90" y="130" fill="#e06a54">4 · Davi</text>
+
+            <text x="300" y="26" class="cap">pedido</text>
+            <rect class="cell" x="230" y="34" width="150" height="26"/><text x="305" y="52">10 · cli 1 · 300</text>
+            <rect class="cell" x="230" y="60" width="150" height="26"/><text x="305" y="78">11 · cli 1 · 150</text>
+            <rect class="cell" x="230" y="86" width="150" height="26"/><text x="305" y="104">12 · cli 2 · 500</text>
+            <rect class="cell" x="230" y="112" width="150" height="26"/><text x="305" y="130">13 · cli 3 · 200</text>
+
+            <line class="ln-soft" x1="152" y1="47" x2="228" y2="47" marker-end="url(#a7m12)"/>
+            <line class="ln-soft" x1="152" y1="47" x2="228" y2="73" marker-end="url(#a7m12)"/>
+            <line class="ln-soft" x1="152" y1="73" x2="228" y2="99" marker-end="url(#a7m12)"/>
+            <line class="ln-soft" x1="152" y1="99" x2="228" y2="125" marker-end="url(#a7m12)"/>
+
+            <text x="640" y="26" class="cap">resultado (ON cliente.id = pedido.id_cliente)</text>
+            <rect class="head" x="470" y="34" width="360" height="26"/>
+            <rect class="cell" x="470" y="34" width="120" height="26"/><rect class="cell" x="590" y="34" width="120" height="26"/><rect class="cell" x="710" y="34" width="120" height="26"/>
+            <text x="530" y="52" class="hl">nome</text><text x="650" y="52" class="hl">id_pedido</text><text x="770" y="52" class="hl">valor</text>
+            <rect class="cell" x="470" y="60" width="120" height="24"/><rect class="cell" x="590" y="60" width="120" height="24"/><rect class="cell" x="710" y="60" width="120" height="24"/>
+            <text x="530" y="77">Ana</text><text x="650" y="77">10</text><text x="770" y="77">300</text>
+            <rect class="cell" x="470" y="84" width="120" height="24"/><rect class="cell" x="590" y="84" width="120" height="24"/><rect class="cell" x="710" y="84" width="120" height="24"/>
+            <text x="530" y="101">Ana</text><text x="650" y="101">11</text><text x="770" y="101">150</text>
+            <rect class="cell" x="470" y="108" width="120" height="24"/><rect class="cell" x="590" y="108" width="120" height="24"/><rect class="cell" x="710" y="108" width="120" height="24"/>
+            <text x="530" y="125">Beto</text><text x="650" y="125">12</text><text x="770" y="125">500</text>
+            <rect class="cell" x="470" y="132" width="120" height="24"/><rect class="cell" x="590" y="132" width="120" height="24"/><rect class="cell" x="710" y="132" width="120" height="24"/>
+            <text x="530" y="149">Carla</text><text x="650" y="149">13</text><text x="770" y="149">200</text>
+          </g>
+          <text x="90" y="165" text-anchor="middle" font-size="12" fill="#e06a54">Davi não casa → fica de fora</text>
+        </svg>
+      </div>
+    </section>
+
+    <!-- 13 · INNER JOIN CÓDIGO -->
+    <section class="slide">
+      <span class="tag">DQL · JOIN</span>
+      <h2>INNER JOIN na prática</h2>
+      <pre><code>SELECT c.nome, p.id AS id_pedido, p.valor
+FROM   cliente c
+INNER JOIN pedido p ON p.id_cliente = c.id
+ORDER BY c.nome;</code></pre>
+      <table>
+        <tr><th>nome</th><th>id_pedido</th><th>valor</th></tr>
+        <tr><td>Ana</td><td>10</td><td>300</td></tr>
+        <tr><td>Ana</td><td>11</td><td>150</td></tr>
+        <tr><td>Beto</td><td>12</td><td>500</td></tr>
+        <tr><td>Carla</td><td>13</td><td>200</td></tr>
+      </table>
+      <div class="callout"><code>c</code> e <code>p</code> são <b>apelidos</b> (alias) — deixam o SQL mais curto.</div>
+    </section>
+
+    <!-- 14 · LEFT JOIN -->
+    <section class="slide">
+      <span class="tag">DQL · JOIN</span>
+      <h2>LEFT JOIN — manter todos da esquerda</h2>
+      <div class="split">
+        <div>
+          <pre><code>SELECT c.nome, p.id AS id_pedido, p.valor
+FROM   cliente c
+LEFT JOIN pedido p ON p.id_cliente = c.id;</code></pre>
+          <p>Traz <b>todos os clientes</b>. Quem não tem pedido aparece com
+          <code>NULL</code> nas colunas de <code>pedido</code>.</p>
+        </div>
+        <div>
+          <table>
+            <tr><th>nome</th><th>id_pedido</th><th>valor</th></tr>
+            <tr><td>Ana</td><td>10</td><td>300</td></tr>
+            <tr><td>Ana</td><td>11</td><td>150</td></tr>
+            <tr><td>Beto</td><td>12</td><td>500</td></tr>
+            <tr><td>Carla</td><td>13</td><td>200</td></tr>
+            <tr><td>Davi</td><td><em>NULL</em></td><td><em>NULL</em></td></tr>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 15 · JOIN + GROUP BY -->
+    <section class="slide">
+      <span class="tag">O objetivo</span>
+      <h2>Total gasto por cliente</h2>
+      <div class="split">
+        <div>
+          <pre><code>SELECT c.nome,
+       COUNT(p.id)              AS pedidos,
+       COALESCE(SUM(p.valor),0) AS total
+FROM   cliente c
+LEFT JOIN pedido p ON p.id_cliente = c.id
+GROUP BY c.nome
+ORDER BY total DESC;</code></pre>
+          <p class="cap"><code>LEFT JOIN</code> para não perder o Davi; <code>COALESCE</code>
+          troca o <code>NULL</code> da soma por 0.</p>
+        </div>
+        <div>
+          <table>
+            <tr><th>nome</th><th>pedidos</th><th>total</th></tr>
+            <tr><td>Beto</td><td>1</td><td>500</td></tr>
+            <tr><td>Ana</td><td>2</td><td>450</td></tr>
+            <tr><td>Carla</td><td>1</td><td>200</td></tr>
+            <tr><td>Davi</td><td>0</td><td>0</td></tr>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 16 · ORDEM LÓGICA -->
+    <section class="slide">
+      <span class="tag">Como o banco lê</span>
+      <h2>A ordem lógica das cláusulas</h2>
+      <div class="fig">
+        <svg viewBox="0 0 940 200" role="img" aria-label="Ordem de execução: FROM, JOIN, WHERE, GROUP BY, HAVING, SELECT, ORDER BY, LIMIT">
+          <defs><marker id="a7m16" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#d4a94e"/></marker></defs>
+          <g text-anchor="middle" font-size="13">
+            <rect class="box-soft" x="15"  y="80" width="95"  height="42" rx="7"/><text x="62"  y="106">FROM / JOIN</text>
+            <line class="ln" x1="112" y1="101" x2="140" y2="101" marker-end="url(#a7m16)"/>
+            <rect class="box-soft" x="142" y="80" width="80"  height="42" rx="7"/><text x="182" y="106">WHERE</text>
+            <line class="ln" x1="224" y1="101" x2="252" y2="101" marker-end="url(#a7m16)"/>
+            <rect class="box-soft" x="254" y="80" width="100" height="42" rx="7"/><text x="304" y="106">GROUP BY</text>
+            <line class="ln" x1="356" y1="101" x2="384" y2="101" marker-end="url(#a7m16)"/>
+            <rect class="box-soft" x="386" y="80" width="85"  height="42" rx="7"/><text x="428" y="106">HAVING</text>
+            <line class="ln" x1="473" y1="101" x2="501" y2="101" marker-end="url(#a7m16)"/>
+            <rect class="box" x="503" y="80" width="90"  height="42" rx="7"/><text x="548" y="106" class="hl">SELECT</text>
+            <line class="ln" x1="595" y1="101" x2="623" y2="101" marker-end="url(#a7m16)"/>
+            <rect class="box-soft" x="625" y="80" width="105" height="42" rx="7"/><text x="677" y="106">ORDER BY</text>
+            <line class="ln" x1="732" y1="101" x2="760" y2="101" marker-end="url(#a7m16)"/>
+            <rect class="box-soft" x="762" y="80" width="80"  height="42" rx="7"/><text x="802" y="106">LIMIT</text>
+          </g>
+        </svg>
+      </div>
+      <div class="callout">Você <b>escreve</b> começando por <code>SELECT</code>, mas o banco
+      <b>executa</b> nessa ordem — por isso o <code>WHERE</code> não enxerga apelidos do <code>SELECT</code>.</div>
+    </section>
+
+    <!-- 17 · PENSE -->
+    <section class="slide">
+      <span class="tag">Pergunta pra pensar</span>
+      <h2>Antes da próxima aula</h2>
+      <div class="split">
+        <div>
+          <p>Com as tabelas <code>cliente</code> e <code>pedido</code> da aula, escreva o SQL para:</p>
+          <ol>
+            <li>os clientes de <b>SP</b>, em ordem alfabética;</li>
+            <li>o <b>total de pedidos</b> e a <b>soma</b> por <code>status</code>;</li>
+            <li>os clientes que <b>não têm nenhum pedido</b>;</li>
+            <li>o cliente que <b>mais gastou</b> (só ele).</li>
+          </ol>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 360 240" role="img" aria-label="cliente e pedido ligados por id_cliente">
+            <rect class="box-soft" x="20" y="90" width="140" height="56" rx="8"/>
+            <text x="90" y="114" text-anchor="middle" font-size="13" class="hl">cliente</text>
+            <text x="90" y="133" text-anchor="middle" font-size="10" class="cap">id · nome · cidade</text>
+            <line class="ln-soft" x1="160" y1="118" x2="210" y2="118"/>
+            <rect class="box-soft" x="210" y="90" width="140" height="56" rx="8"/>
+            <text x="280" y="114" text-anchor="middle" font-size="13" class="hl">pedido</text>
+            <text x="280" y="133" text-anchor="middle" font-size="10" class="cap">id · id_cliente · valor · status</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 18 · FECHAMENTO -->
+    <section class="slide cover">
+      <img class="crest" src="assets/img/logo_univassouras.png" alt="Universidade de Vassouras">
+      <h1>Dúvidas?</h1>
+      <div class="meta">
+        Prof. Diego Ramos Inácio<br>
+        diego.inacio@univassouras.edu.br<br>
+        Curso de Engenharia de Software — Universidade de Vassouras
+      </div>
+    </section>
+
+  </div>
+
+  <div class="deck-count">1 / 18</div>
+  <div class="deck-nav">
+    <button data-prev aria-label="Slide anterior">‹</button>
+    <button data-next aria-label="Próximo slide">›</button>
+  </div>
+
+  <script src="assets/js/deck.js"></script>
+</body>
+</html>
