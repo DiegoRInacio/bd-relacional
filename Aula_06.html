@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 06 — SQL: DDL e DML</title>
+  <link rel="stylesheet" href="assets/css/deck.css">
+</head>
+<body>
+
+  <div class="deck-top">
+    <span class="t">Banco de Dados Relacional · Aula 06</span>
+    <a href="index.html">← Portal</a>
+  </div>
+  <div class="deck-prog"></div>
+
+  <div class="deck">
+
+    <!-- 1 · CAPA -->
+    <section class="slide cover active">
+      <img class="crest" src="assets/img/logo_univassouras.png" alt="Universidade de Vassouras">
+      <h1>SQL — DDL e DML</h1>
+      <div class="meta">
+        Banco de Dados Relacional · Aula 06<br>
+        Curso de Engenharia de Software — Universidade de Vassouras<br>
+        Prof. Diego Ramos Inácio
+      </div>
+    </section>
+
+    <!-- 2 · SUBLINGUAGENS -->
+    <section class="slide">
+      <span class="tag">Visão geral</span>
+      <h2>SQL não é uma coisa só</h2>
+      <p>É uma linguagem única, mas os comandos se agrupam por <b>propósito</b>:</p>
+      <div class="fig">
+        <svg viewBox="0 0 960 300" role="img" aria-label="SQL dividido em DDL, DML, DQL, DCL e TCL">
+          <defs><marker id="a6m2" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="rgba(255,255,255,.5)"/></marker></defs>
+          <rect class="box" x="410" y="20" width="140" height="46" rx="8"/>
+          <text x="480" y="49" text-anchor="middle" font-size="18" class="hl">SQL</text>
+          <g text-anchor="middle" font-size="13.5">
+            <line class="ln-soft" x1="440" y1="66" x2="110" y2="130" marker-end="url(#a6m2)"/>
+            <rect class="box-soft" x="20" y="130" width="180" height="120" rx="8"/>
+            <text x="110" y="155" class="hl" font-size="15">DDL</text>
+            <text x="110" y="180">estrutura</text>
+            <text x="110" y="205">CREATE · ALTER</text>
+            <text x="110" y="228">DROP · TRUNCATE</text>
+
+            <line class="ln-soft" x1="460" y1="66" x2="300" y2="130" marker-end="url(#a6m2)"/>
+            <rect class="box-soft" x="210" y="130" width="180" height="120" rx="8"/>
+            <text x="300" y="155" class="hl" font-size="15">DML</text>
+            <text x="300" y="180">dados (linhas)</text>
+            <text x="300" y="205">INSERT · UPDATE</text>
+            <text x="300" y="228">DELETE</text>
+
+            <line class="ln-soft" x1="480" y1="66" x2="480" y2="130" marker-end="url(#a6m2)"/>
+            <rect class="box-soft" x="400" y="130" width="160" height="120" rx="8"/>
+            <text x="480" y="155" class="hl" font-size="15">DQL</text>
+            <text x="480" y="180">consulta</text>
+            <text x="480" y="205">SELECT</text>
+            <text x="480" y="228" class="cap">(Aula 07)</text>
+
+            <line class="ln-soft" x1="500" y1="66" x2="660" y2="130" marker-end="url(#a6m2)"/>
+            <rect class="box-soft" x="570" y="130" width="160" height="120" rx="8"/>
+            <text x="650" y="155" class="hl" font-size="15">DCL</text>
+            <text x="650" y="180">permissões</text>
+            <text x="650" y="205">GRANT</text>
+            <text x="650" y="228">REVOKE</text>
+
+            <line class="ln-soft" x1="520" y1="66" x2="850" y2="130" marker-end="url(#a6m2)"/>
+            <rect class="box-soft" x="740" y="130" width="200" height="120" rx="8"/>
+            <text x="840" y="155" class="hl" font-size="15">TCL</text>
+            <text x="840" y="180">transações</text>
+            <text x="840" y="205">BEGIN · COMMIT</text>
+            <text x="840" y="228">ROLLBACK</text>
+          </g>
+        </svg>
+      </div>
+      <div class="callout">Hoje: <b>DDL</b> (mexe na estrutura) e <b>DML</b> (mexe nos dados) + <b>TCL</b>.</div>
+    </section>
+
+    <!-- 3 · DDL -->
+    <section class="slide">
+      <span class="tag">DDL</span>
+      <h2>DDL — a estrutura do banco</h2>
+      <p>Mexe em <b>tabelas, colunas, constraints e índices</b> — não nos dados.</p>
+      <div class="cols">
+        <div class="box"><b>CREATE</b><br>cria tabela, índice, schema... (Aula 04)</div>
+        <div class="box"><b>ALTER</b><br>muda uma tabela que já existe</div>
+        <div class="box"><b>DROP</b><br>apaga o objeto inteiro</div>
+        <div class="box"><b>TRUNCATE</b><br>esvazia a tabela (rápido)</div>
+      </div>
+    </section>
+
+    <!-- 4 · ALTER TABLE -->
+    <section class="slide">
+      <span class="tag">DDL · ALTER</span>
+      <h2>ALTER TABLE — mudar sem recriar</h2>
+      <div class="split">
+        <div>
+          <pre><code>-- adicionar coluna
+ALTER TABLE aluno ADD COLUMN ativo BOOLEAN DEFAULT TRUE;
+
+-- remover coluna
+ALTER TABLE aluno DROP COLUMN telefone;
+
+-- renomear coluna
+ALTER TABLE aluno RENAME COLUMN nome TO nome_completo;
+
+-- adicionar constraint
+ALTER TABLE aluno ADD CONSTRAINT chk_idade CHECK (idade &gt;= 16);</code></pre>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 440 240" role="img" aria-label="ALTER TABLE adiciona a coluna ativo à tabela existente">
+            <defs><marker id="a6m4" markerWidth="10" markerHeight="10" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+
+            <text x="80" y="52" text-anchor="middle" font-size="13" class="cap">antes</text>
+            <rect class="head" x="20" y="65" width="130" height="32"/>
+            <rect class="cell" x="20" y="65" width="55" height="32"/><rect class="cell" x="75" y="65" width="75" height="32"/>
+            <text x="47" y="86" text-anchor="middle" font-size="12" class="hl">id</text><text x="112" y="86" text-anchor="middle" font-size="12" class="hl">nome</text>
+            <rect class="cell" x="20" y="97" width="55" height="30"/><rect class="cell" x="75" y="97" width="75" height="30"/>
+            <text x="47" y="117" text-anchor="middle" font-size="12">1</text><text x="112" y="117" text-anchor="middle" font-size="12">Ana</text>
+
+            <text x="207" y="80" text-anchor="middle" font-size="11" class="hl">ADD COLUMN ativo</text>
+            <line class="ln" x1="163" y1="100" x2="256" y2="100" marker-end="url(#a6m4)"/>
+
+            <text x="345" y="52" text-anchor="middle" font-size="13" class="cap">depois</text>
+            <rect class="head" x="265" y="65" width="160" height="32"/>
+            <rect class="cell" x="265" y="65" width="50" height="32"/><rect class="cell" x="315" y="65" width="65" height="32"/><rect class="cell" x="380" y="65" width="45" height="32"/>
+            <text x="290" y="86" text-anchor="middle" font-size="12" class="hl">id</text><text x="347" y="86" text-anchor="middle" font-size="12" class="hl">nome</text><text x="402" y="86" text-anchor="middle" font-size="10.5" class="hl">ativo</text>
+            <rect class="cell" x="265" y="97" width="50" height="30"/><rect class="cell" x="315" y="97" width="65" height="30"/><rect class="cell" x="380" y="97" width="45" height="30"/>
+            <text x="290" y="117" text-anchor="middle" font-size="12">1</text><text x="347" y="117" text-anchor="middle" font-size="12">Ana</text><text x="402" y="117" text-anchor="middle" font-size="11" class="hl">true</text>
+
+            <text x="222" y="165" text-anchor="middle" font-size="12" class="cap">as linhas que já existiam recebem o valor DEFAULT</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 · DROP -->
+    <section class="slide">
+      <span class="tag">DDL · DROP</span>
+      <h2>DROP TABLE — apaga o objeto inteiro</h2>
+      <div class="split">
+        <div>
+          <pre><code>DROP TABLE aluno;
+
+-- não dá erro se a tabela não existir
+DROP TABLE IF EXISTS aluno;
+
+-- derruba também o que depende dela (FKs)
+DROP TABLE curso CASCADE;</code></pre>
+          <p><code>DROP</code> tira a <b>tabela e os dados</b>. <code>DELETE</code> tira só as linhas.</p>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 380 280" role="img" aria-label="DROP TABLE curso: bloqueado se aluno referencia; com CASCADE derruba aluno junto">
+            <defs><marker id="a6m5" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+            <rect class="box" x="130" y="20" width="120" height="44" rx="8"/>
+            <text x="190" y="47" text-anchor="middle" font-size="14" class="hl">curso</text>
+            <line class="ln-soft" x1="190" y1="64" x2="190" y2="104"/>
+            <text x="205" y="88" font-size="11" class="cap">FK</text>
+            <rect class="box-soft" x="130" y="104" width="120" height="44" rx="8"/>
+            <text x="190" y="131" text-anchor="middle" font-size="14">aluno</text>
+
+            <g font-size="12">
+              <rect x="20" y="180" width="150" height="40" fill="none" stroke="#e06a54" stroke-width="2"/>
+              <text x="30" y="205" fill="#e06a54">DROP TABLE curso;</text>
+              <text x="30" y="240" fill="#e06a54" font-size="11">✗ aluno depende</text>
+
+              <rect x="200" y="180" width="160" height="40" fill="none" stroke="#9ed0a0" stroke-width="2"/>
+              <text x="210" y="205" fill="#9ed0a0" font-size="11">DROP TABLE curso CASCADE;</text>
+              <text x="210" y="240" fill="#9ed0a0" font-size="11">✓ derruba aluno junto</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 · DELETE x TRUNCATE -->
+    <section class="slide">
+      <span class="tag">DDL/DML</span>
+      <h2>DELETE × TRUNCATE</h2>
+      <table>
+        <tr><th></th><th><code>DELETE FROM t;</code></th><th><code>TRUNCATE t;</code></th></tr>
+        <tr><td>o que faz</td><td>apaga linha por linha</td><td>esvazia a tabela de uma vez</td></tr>
+        <tr><td>aceita <code>WHERE</code></td><td>sim</td><td>não — é tudo</td></tr>
+        <tr><td>velocidade</td><td>mais lento</td><td>muito rápido</td></tr>
+        <tr><td>dispara triggers</td><td>sim</td><td>não (por linha)</td></tr>
+        <tr><td>dentro de transação</td><td>reversível com <code>ROLLBACK</code></td><td>reversível no PostgreSQL</td></tr>
+      </table>
+      <div class="callout">Para "limpar tudo" numa tabela de testes, <code>TRUNCATE</code>. Para apagar <b>algumas</b> linhas, <code>DELETE ... WHERE</code>.</div>
+    </section>
+
+    <!-- 7 · DML -->
+    <section class="slide">
+      <span class="tag">DML</span>
+      <h2>DML — os dados dentro das tabelas</h2>
+      <div class="fig">
+        <svg viewBox="0 0 900 220" role="img" aria-label="Os três comandos DML: INSERT adiciona linha, UPDATE altera, DELETE remove">
+          <g text-anchor="middle">
+            <rect class="box" x="40" y="50" width="240" height="110" rx="10"/>
+            <text x="160" y="82" font-size="17" class="hl">INSERT</text>
+            <text x="160" y="112" font-size="13">adiciona novas linhas</text>
+            <text x="160" y="135" font-size="12" class="cap">+ uma linha</text>
+
+            <rect class="box" x="330" y="50" width="240" height="110" rx="10"/>
+            <text x="450" y="82" font-size="17" class="hl">UPDATE</text>
+            <text x="450" y="112" font-size="13">altera linhas que já existem</text>
+            <text x="450" y="135" font-size="12" class="cap">~ muda valores</text>
+
+            <rect class="box" x="620" y="50" width="240" height="110" rx="10"/>
+            <text x="740" y="82" font-size="17" class="hl">DELETE</text>
+            <text x="740" y="112" font-size="13">remove linhas</text>
+            <text x="740" y="135" font-size="12" class="cap">− linhas</text>
+          </g>
+        </svg>
+      </div>
+      <div class="callout">Os três aceitam <code>WHERE</code> para escolher <b>quais</b> linhas — menos o <code>INSERT</code>.</div>
+    </section>
+
+    <!-- 8 · INSERT (recap) -->
+    <section class="slide">
+      <span class="tag">DML · INSERT</span>
+      <h2>INSERT — recapitulando</h2>
+      <pre><code>-- sempre liste as colunas
+INSERT INTO aluno (nome, email, idade)
+VALUES ('Ana', 'ana@ex.com', 19);
+
+-- várias linhas de uma vez
+INSERT INTO curso (nome) VALUES
+  ('Eng. de Software'), ('Medicina'), ('Direito');
+
+-- deixar o DEFAULT / SERIAL agir: só não informe a coluna
+INSERT INTO aluno (nome, email) VALUES ('Beto', 'beto@ex.com');</code></pre>
+      <div class="callout">Detalhes na Aula 04. Aqui o foco é <code>UPDATE</code> e <code>DELETE</code>.</div>
+    </section>
+
+    <!-- 9 · UPDATE anatomia -->
+    <section class="slide">
+      <span class="tag">DML · UPDATE</span>
+      <h2>Anatomia do UPDATE</h2>
+      <div class="fig">
+        <svg viewBox="0 0 960 320" role="img" aria-label="Partes do UPDATE: tabela alvo, o novo valor no SET e o filtro no WHERE">
+          <defs><marker id="a6m9" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+          <rect x="250" y="110" width="440" height="170" rx="10" fill="rgba(0,0,0,.32)" stroke="#d4a94e" stroke-width="1.4"/>
+          <g font-family="Consolas,monospace" font-size="19">
+            <text x="280" y="152" fill="#f6f0e4">UPDATE</text>
+            <text x="390" y="152" fill="#d4a94e">aluno</text>
+            <text x="280" y="200" fill="#f6f0e4">SET</text>
+            <text x="360" y="200" fill="#9ed0a0">idade = 20</text>
+            <text x="280" y="248" fill="#f6f0e4">WHERE</text>
+            <text x="390" y="248" fill="#e7a33e">id = 3;</text>
+          </g>
+          <!-- tabela alvo -> aluno (de cima) -->
+          <text x="415" y="66" text-anchor="middle" font-size="14">tabela alvo</text>
+          <line class="ln" x1="415" y1="74" x2="410" y2="134" marker-end="url(#a6m9)"/>
+          <!-- novo valor -> idade = 20 (da direita) -->
+          <text x="850" y="200" text-anchor="middle" font-size="14">novo valor</text>
+          <line class="ln" x1="805" y1="196" x2="500" y2="196" marker-end="url(#a6m9)"/>
+          <!-- filtro -> id = 3 (de baixo) -->
+          <text x="430" y="308" text-anchor="middle" font-size="14">quais linhas (filtro)</text>
+          <line class="ln" x1="430" y1="300" x2="410" y2="256" marker-end="url(#a6m9)"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- 10 · UPDATE sem WHERE -->
+    <section class="slide">
+      <span class="tag">DML · UPDATE</span>
+      <h2>O WHERE esquecido</h2>
+      <div class="split">
+        <div>
+          <p>Sem <code>WHERE</code>, o <code>UPDATE</code> vale para <b>todas as linhas</b> da tabela.</p>
+          <pre><code>-- QUERIA: só o aluno 3
+UPDATE aluno SET idade = 20;   -- ⚠ sem WHERE!
+-- resultado: TODOS os alunos ficam com idade 20</code></pre>
+          <p>O mesmo vale para o <code>DELETE</code>. Antes de rodar, teste o filtro num
+          <code>SELECT</code> ou use uma <b>transação</b>.</p>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 360 280" role="img" aria-label="UPDATE sem WHERE altera todas as linhas da tabela">
+            <g font-size="12" text-anchor="middle">
+              <rect class="head" x="40" y="20" width="280" height="30"/>
+              <rect class="cell" x="40" y="20" width="60" height="30"/><rect class="cell" x="100" y="20" width="120" height="30"/><rect class="cell" x="220" y="20" width="100" height="30"/>
+              <text x="70" y="40" class="hl">id</text><text x="160" y="40" class="hl">nome</text><text x="270" y="40" class="hl">idade</text>
+              <rect class="cell" x="40" y="50" width="60" height="34"/><rect class="cell" x="100" y="50" width="120" height="34"/><rect class="cell" x="220" y="50" width="100" height="34"/>
+              <text x="70" y="72">1</text><text x="160" y="72">Ana</text><text x="270" y="72" class="warn">20</text>
+              <rect class="cell" x="40" y="84" width="60" height="34"/><rect class="cell" x="100" y="84" width="120" height="34"/><rect class="cell" x="220" y="84" width="100" height="34"/>
+              <text x="70" y="106">2</text><text x="160" y="106">Beto</text><text x="270" y="106" class="warn">20</text>
+              <rect class="cell" x="40" y="118" width="60" height="34"/><rect class="cell" x="100" y="118" width="120" height="34"/><rect class="cell" x="220" y="118" width="100" height="34"/>
+              <text x="70" y="140">3</text><text x="160" y="140">Carla</text><text x="270" y="140" class="hl">20</text>
+            </g>
+            <text x="180" y="185" text-anchor="middle" font-size="13" class="warn">⚠ Ana e Beto também mudaram</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11 · UPDATE FROM -->
+    <section class="slide">
+      <span class="tag">DML · UPDATE</span>
+      <h2>UPDATE a partir de outra tabela</h2>
+      <div class="split wide-fig">
+        <div>
+          <p>Dá para atualizar uma tabela usando valores de outra, com <code>FROM</code>:</p>
+          <pre><code>UPDATE produto p
+SET    preco = preco * 1.10
+FROM   reajuste r
+WHERE  r.id_prod = p.id_prod
+  AND  r.categoria = 'eletronico';</code></pre>
+          <p class="cap">"aumenta 10% no preço dos produtos que estão na tabela de reajuste".</p>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 380 260" role="img" aria-label="A tabela reajuste alimenta o UPDATE na tabela produto">
+            <defs><marker id="a6m11" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+            <rect class="box-soft" x="20" y="100" width="120" height="60" rx="10"/>
+            <text x="80" y="128" text-anchor="middle" font-size="14">reajuste</text>
+            <text x="80" y="148" text-anchor="middle" font-size="11" class="cap">(quais e quanto)</text>
+            <line class="ln" x1="142" y1="130" x2="220" y2="130" marker-end="url(#a6m11)"/>
+            <text x="181" y="118" text-anchor="middle" font-size="11" class="hl">FROM</text>
+            <rect class="box" x="222" y="100" width="130" height="60" rx="10"/>
+            <text x="287" y="128" text-anchor="middle" font-size="14" class="hl">produto</text>
+            <text x="287" y="148" text-anchor="middle" font-size="11" class="cap">preços atualizados</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 · DELETE -->
+    <section class="slide">
+      <span class="tag">DML · DELETE</span>
+      <h2>DELETE — remover linhas</h2>
+      <div class="split">
+        <div>
+          <pre><code>-- remove linhas específicas
+DELETE FROM aluno WHERE id = 3;
+
+-- remove por condição
+DELETE FROM pedido WHERE status = 'CANCELADO'
+  AND data &lt; '2023-01-01';
+
+-- SEM where = apaga a tabela inteira ⚠
+DELETE FROM aluno;</code></pre>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 380 260" role="img" aria-label="DELETE de um curso é bloqueado se houver aluno referenciando">
+            <defs><marker id="a6m12" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+            <rect class="box" x="120" y="20" width="140" height="44" rx="8"/>
+            <text x="190" y="47" text-anchor="middle" font-size="14" class="hl">curso · id 10</text>
+            <line class="ln-soft" x1="190" y1="64" x2="190" y2="104"/>
+            <rect class="box-soft" x="110" y="104" width="160" height="44" rx="8"/>
+            <text x="190" y="131" text-anchor="middle" font-size="13">aluno (curso_id = 10)</text>
+            <rect x="30" y="185" width="320" height="40" fill="none" stroke="#e06a54" stroke-width="2"/>
+            <text x="45" y="203" font-size="12" fill="#e06a54">DELETE FROM curso WHERE id = 10;</text>
+            <text x="45" y="220" font-size="11" fill="#e06a54">✗ FK: há aluno usando o curso 10</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 13 · TRANSAÇÃO -->
+    <section class="slide">
+      <span class="tag">TCL</span>
+      <h2>Transação — tudo ou nada</h2>
+      <div class="split wide-fig">
+        <div>
+          <p>Vários comandos agrupados: <code>COMMIT</code> confirma todos,
+          <code>ROLLBACK</code> desfaz todos.</p>
+          <pre><code>BEGIN;
+  UPDATE conta SET saldo = saldo - 100 WHERE id = 1;
+  UPDATE conta SET saldo = saldo + 100 WHERE id = 2;
+-- conferiu? deu certo?
+COMMIT;      -- ou ROLLBACK; para cancelar</code></pre>
+          <p class="cap">Ótimo para testar um <code>UPDATE</code>/<code>DELETE</code> arriscado com segurança.</p>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 360 300" role="img" aria-label="Comandos dentro de BEGIN; COMMIT grava, ROLLBACK desfaz">
+            <defs><marker id="a6m13" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+            <rect class="box" x="60" y="20" width="240" height="34" rx="6"/><text x="180" y="42" text-anchor="middle" font-size="13" class="hl">BEGIN</text>
+            <rect class="box-soft" x="60" y="66" width="240" height="30" rx="6"/><text x="180" y="86" text-anchor="middle" font-size="12">UPDATE ... −100</text>
+            <rect class="box-soft" x="60" y="102" width="240" height="30" rx="6"/><text x="180" y="122" text-anchor="middle" font-size="12">UPDATE ... +100</text>
+            <line class="ln" x1="140" y1="140" x2="110" y2="185" marker-end="url(#a6m13)"/>
+            <line class="ln" x1="220" y1="140" x2="250" y2="185" marker-end="url(#a6m13)"/>
+            <rect x="30" y="190" width="150" height="40" fill="none" stroke="#9ed0a0" stroke-width="2"/>
+            <text x="45" y="215" font-size="12" fill="#9ed0a0">COMMIT → grava</text>
+            <rect x="200" y="190" width="150" height="40" fill="none" stroke="#e06a54" stroke-width="2"/>
+            <text x="215" y="215" font-size="12" fill="#e06a54">ROLLBACK → desfaz</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 14 · RESUMO -->
+    <section class="slide">
+      <span class="tag">Resumo</span>
+      <h2>Cada comando no seu lugar</h2>
+      <table>
+        <tr><th>Grupo</th><th>Comandos</th><th>Mexe em</th></tr>
+        <tr><td><b>DDL</b></td><td><code>CREATE</code> · <code>ALTER</code> · <code>DROP</code> · <code>TRUNCATE</code></td><td>estrutura (tabelas, colunas, constraints)</td></tr>
+        <tr><td><b>DML</b></td><td><code>INSERT</code> · <code>UPDATE</code> · <code>DELETE</code></td><td>os dados (linhas)</td></tr>
+        <tr><td><b>TCL</b></td><td><code>BEGIN</code> · <code>COMMIT</code> · <code>ROLLBACK</code></td><td>agrupa alterações em transação</td></tr>
+        <tr><td><b>DQL</b></td><td><code>SELECT</code> (Aula 07)</td><td>lê / consulta</td></tr>
+      </table>
+    </section>
+
+    <!-- 15 · PENSE -->
+    <section class="slide">
+      <span class="tag">Pergunta pra pensar</span>
+      <h2>Antes da próxima aula</h2>
+      <div class="split">
+        <div>
+          <p>Você tem a tabela <code>funcionario(id, nome, salario, setor, ativo)</code>. Escreva:</p>
+          <ol>
+            <li>um <code>ALTER</code> que adiciona a coluna <code>data_admissao DATE</code>;</li>
+            <li>um <code>UPDATE</code> que dá 8% de aumento a quem é do setor <code>'TI'</code>;</li>
+            <li>um <code>DELETE</code> <b>seguro</b> que remove os inativos — e como testar
+            o filtro antes de rodar.</li>
+          </ol>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 360 240" role="img" aria-label="tabela funcionario com coluna a ser adicionada e linhas a ajustar">
+            <g font-size="11" text-anchor="middle">
+              <rect class="head" x="15" y="30" width="330" height="28"/>
+              <rect class="cell" x="15" y="30" width="40" height="28"/><rect class="cell" x="55" y="30" width="80" height="28"/>
+              <rect class="cell" x="135" y="30" width="70" height="28"/><rect class="cell" x="205" y="30" width="70" height="28"/><rect class="cell" x="275" y="30" width="70" height="28"/>
+              <text x="35" y="48">id</text><text x="95" y="48">nome</text><text x="170" y="48">salario</text><text x="240" y="48">setor</text><text x="310" y="48" class="cap">ativo</text>
+              <rect class="cell" x="15" y="58" width="40" height="26"/><rect class="cell" x="55" y="58" width="80" height="26"/><rect class="cell" x="135" y="58" width="70" height="26"/><rect class="cell" x="205" y="58" width="70" height="26"/><rect class="cell" x="275" y="58" width="70" height="26"/>
+              <text x="35" y="76">1</text><text x="95" y="76">Ana</text><text x="170" y="76">5000</text><text x="240" y="76" class="hl">TI</text><text x="310" y="76">true</text>
+              <rect class="cell" x="15" y="84" width="40" height="26"/><rect class="cell" x="55" y="84" width="80" height="26"/><rect class="cell" x="135" y="84" width="70" height="26"/><rect class="cell" x="205" y="84" width="70" height="26"/><rect class="cell" x="275" y="84" width="70" height="26"/>
+              <text x="35" y="102">2</text><text x="95" y="102">Beto</text><text x="170" y="102">4000</text><text x="240" y="102">RH</text><text x="310" y="102" class="warn">false</text>
+            </g>
+            <text x="180" y="145" text-anchor="middle" font-size="12" class="cap">+ coluna data_admissao · reajuste TI · remover inativos</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 16 · FECHAMENTO -->
+    <section class="slide cover">
+      <img class="crest" src="assets/img/logo_univassouras.png" alt="Universidade de Vassouras">
+      <h1>Dúvidas?</h1>
+      <div class="meta">
+        Prof. Diego Ramos Inácio<br>
+        diego.inacio@univassouras.edu.br<br>
+        Curso de Engenharia de Software — Universidade de Vassouras
+      </div>
+    </section>
+
+  </div>
+
+  <div class="deck-count">1 / 16</div>
+  <div class="deck-nav">
+    <button data-prev aria-label="Slide anterior">‹</button>
+    <button data-next aria-label="Próximo slide">›</button>
+  </div>
+
+  <script src="assets/js/deck.js"></script>
+</body>
+</html>

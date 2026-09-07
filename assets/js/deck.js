@@ -8,6 +8,12 @@
   var bPrev = document.querySelector('[data-prev]');
   var bNext = document.querySelector('[data-next]');
 
+  function renderMermaid() {
+    if (!window.mermaid || !window.mermaid.run) return;
+    var pend = Array.prototype.slice.call(slides[i].querySelectorAll('.mermaid:not([data-processed])'));
+    if (pend.length) { try { window.mermaid.run({ nodes: pend }); } catch (e) {} }
+  }
+
   function render() {
     slides.forEach(function (s, k) { s.classList.toggle('active', k === i); });
     if (prog) prog.style.width = ((i + 1) / slides.length * 100) + '%';
@@ -15,6 +21,7 @@
     if (bPrev) bPrev.disabled = i === 0;
     if (bNext) bNext.disabled = i === slides.length - 1;
     if (location.hash !== '#' + (i + 1)) history.replaceState(null, '', '#' + (i + 1));
+    renderMermaid();
   }
   function go(n) { i = Math.max(0, Math.min(slides.length - 1, n)); render(); }
 
