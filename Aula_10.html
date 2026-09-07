@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 10 — Usuários e Permissões</title>
+  <link rel="stylesheet" href="assets/css/deck.css">
+</head>
+<body>
+
+  <div class="deck-top">
+    <span class="t">Banco de Dados Relacional · Aula 10</span>
+    <a href="index.html">← Portal</a>
+  </div>
+  <div class="deck-prog"></div>
+
+  <div class="deck">
+
+    <!-- 1 · CAPA -->
+    <section class="slide cover active">
+      <img class="crest" src="assets/img/logo_univassouras.png" alt="Universidade de Vassouras">
+      <h1>Usuários e Permissões</h1>
+      <div class="meta">
+        Banco de Dados Relacional · Aula 10<br>
+        Curso de Engenharia de Software — Universidade de Vassouras<br>
+        Prof. Diego Ramos Inácio
+      </div>
+    </section>
+
+    <!-- 2 · POR QUE -->
+    <section class="slide">
+      <span class="tag">Motivação</span>
+      <h2>Nem todo mundo pode fazer tudo</h2>
+      <p>Controle de acesso não é só "ter login". É definir <b>o que cada um pode fazer</b>
+      dentro do banco.</p>
+      <div class="cols">
+        <div class="box"><b>Aplicação / atendente</b><br>lê e grava em algumas tabelas</div>
+        <div class="box"><b>Auditor</b><br>só lê — não altera nada</div>
+        <div class="box"><b>DBA</b><br>cria tabelas, usuários, faz backup</div>
+      </div>
+      <div class="callout"><b>Princípio do menor privilégio:</b> cada um recebe só o que precisa — nada além.</div>
+    </section>
+
+    <!-- 3 · TUDO É ROLE -->
+    <section class="slide">
+      <span class="tag">Conceito</span>
+      <h2>No PostgreSQL, tudo é uma ROLE</h2>
+      <p>Não existe "usuário" e "grupo" separados. Existe <b>role</b>, que pode:</p>
+      <div class="fig">
+        <svg viewBox="0 0 900 240" role="img" aria-label="Uma role pode logar, ter permissões e ser membro de outra role">
+          <rect class="box" x="360" y="30" width="180" height="52" rx="10"/>
+          <text x="450" y="62" text-anchor="middle" font-size="17" class="hl">ROLE</text>
+          <g text-anchor="middle" font-size="13">
+            <line class="ln-soft" x1="400" y1="82" x2="180" y2="130"/>
+            <rect class="box-soft" x="40" y="130" width="240" height="70" rx="8"/>
+            <text x="160" y="158">ter atributos</text>
+            <text x="160" y="180" class="cap">LOGIN · SUPERUSER · CREATEDB</text>
+
+            <line class="ln-soft" x1="450" y1="82" x2="450" y2="130"/>
+            <rect class="box-soft" x="330" y="130" width="240" height="70" rx="8"/>
+            <text x="450" y="158">ter permissões</text>
+            <text x="450" y="180" class="cap">SELECT, INSERT... em tabelas</text>
+
+            <line class="ln-soft" x1="500" y1="82" x2="720" y2="130"/>
+            <rect class="box-soft" x="620" y="130" width="240" height="70" rx="8"/>
+            <text x="740" y="158">ser membro de outra role</text>
+            <text x="740" y="180" class="cap">= herda as permissões dela</text>
+          </g>
+        </svg>
+      </div>
+      <div class="callout"><code>CREATE USER ana</code> é só um atalho para <code>CREATE ROLE ana LOGIN</code>.</div>
+    </section>
+
+    <!-- 4 · CRIAR -->
+    <section class="slide">
+      <span class="tag">Criar</span>
+      <h2>Criando roles</h2>
+      <pre><code>-- role que loga (um "usuário")
+CREATE USER ana WITH PASSWORD 'S3nh@Forte';
+
+-- role sem login: um "grupo" de permissões
+CREATE ROLE leitura;
+
+-- colocar a Ana no grupo
+GRANT leitura TO ana;
+
+-- no psql:  \du  lista as roles e seus atributos</code></pre>
+      <div class="callout">Senha nunca vai no código — o PostgreSQL guarda só um <em>hash</em> (SCRAM).
+      Trocar depois: <code>\password ana</code>.</div>
+    </section>
+
+    <!-- 5 · ATRIBUTOS -->
+    <section class="slide">
+      <span class="tag">Atributos</span>
+      <h2>O que a role pode ser</h2>
+      <table>
+        <tr><th>Atributo</th><th>Significa</th></tr>
+        <tr><td><code>LOGIN</code></td><td>pode se conectar (é um "usuário")</td></tr>
+        <tr><td><code>SUPERUSER</code></td><td><b>ignora todas as permissões</b> — praticamente nunca use</td></tr>
+        <tr><td><code>CREATEDB</code></td><td>pode criar bancos de dados</td></tr>
+        <tr><td><code>CREATEROLE</code></td><td>pode criar / alterar outras roles</td></tr>
+        <tr><td><code>PASSWORD</code></td><td>define a senha</td></tr>
+      </table>
+      <div class="callout">A aplicação <b>nunca</b> conecta como <code>SUPERUSER</code> nem como o dono do banco.</div>
+    </section>
+
+    <!-- 6 · OS DOIS NÍVEIS -->
+    <section class="slide">
+      <span class="tag">Atenção</span>
+      <h2>Permissão tem dois níveis</h2>
+      <div class="fig">
+        <svg viewBox="0 0 900 240" role="img" aria-label="Primeiro: conectar ao banco e usar o schema. Depois: operar nas tabelas.">
+          <defs><marker id="a10m6" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+          <g text-anchor="middle">
+            <rect class="box" x="30" y="70" width="250" height="100" rx="10"/>
+            <text x="155" y="100" font-size="15" class="hl">1 · chegar até as tabelas</text>
+            <text x="155" y="128" font-size="12.5">GRANT CONNECT ON DATABASE ...</text>
+            <text x="155" y="150" font-size="12.5">GRANT USAGE ON SCHEMA public ...</text>
+
+            <line class="ln" x1="282" y1="120" x2="360" y2="120" marker-end="url(#a10m6)"/>
+
+            <rect class="box" x="365" y="70" width="250" height="100" rx="10"/>
+            <text x="490" y="100" font-size="15" class="hl">2 · operar nas tabelas</text>
+            <text x="490" y="128" font-size="12.5">GRANT SELECT, INSERT, ...</text>
+            <text x="490" y="150" font-size="12.5">ON &lt;tabelas&gt; TO ...</text>
+
+            <line class="ln" x1="617" y1="120" x2="695" y2="120" marker-end="url(#a10m6)"/>
+            <rect class="box-soft" x="700" y="80" width="170" height="80" rx="10"/>
+            <text x="785" y="125" font-size="14">acesso funciona</text>
+          </g>
+        </svg>
+      </div>
+      <div class="callout">Esqueceu o <code>USAGE ON SCHEMA</code>? O erro é
+      <em>"permission denied for schema public"</em> — mesmo com o <code>GRANT SELECT</code> feito.</div>
+    </section>
+
+    <!-- 7 · PERMISSÕES NAS TABELAS -->
+    <section class="slide">
+      <span class="tag">GRANT</span>
+      <h2>Permissões nas tabelas</h2>
+      <pre><code>-- uma tabela específica
+GRANT SELECT ON cliente TO auditor;
+
+-- várias operações, todas as tabelas do schema
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON ALL TABLES IN SCHEMA public TO atendente;
+
+-- em sequências (para o SERIAL funcionar no INSERT)
+GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO atendente;</code></pre>
+      <div class="callout">O <b>dono</b> da tabela já tem tudo. O <code>GRANT</code> serve para dar acesso <b>aos outros</b>.</div>
+    </section>
+
+    <!-- 8 · DEFAULT PRIVILEGES -->
+    <section class="slide">
+      <span class="tag">GRANT</span>
+      <h2>E as tabelas que ainda não existem?</h2>
+      <div class="split">
+        <div>
+          <p>O <code>GRANT ... ON ALL TABLES</code> só vale para as tabelas <b>de agora</b>.
+          Para as futuras, configure o padrão:</p>
+          <pre><code>ALTER DEFAULT PRIVILEGES IN SCHEMA public
+GRANT SELECT ON TABLES TO leitura;</code></pre>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 360 220" role="img" aria-label="Uma tabela criada depois já nasce com o SELECT concedido ao grupo leitura">
+            <defs><marker id="a10m8" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+            <rect class="box-soft" x="30" y="40" width="200" height="40" rx="8"/>
+            <text x="130" y="65" text-anchor="middle" font-size="13">CREATE TABLE nova (...)</text>
+            <line class="ln" x1="130" y1="80" x2="130" y2="120" marker-end="url(#a10m8)"/>
+            <rect class="box" x="30" y="120" width="260" height="50" rx="8"/>
+            <text x="160" y="143" text-anchor="middle" font-size="12" class="hl">já nasce com SELECT p/ leitura</text>
+            <text x="160" y="161" text-anchor="middle" font-size="10" class="cap">sem precisar de novo GRANT</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9 · ROLE DE GRUPO (o jeito certo) -->
+    <section class="slide">
+      <span class="tag">Boa prática</span>
+      <h2>Gerencie o grupo, não a pessoa</h2>
+      <div class="split wide-fig">
+        <div>
+          <pre><code>CREATE ROLE leitura;
+GRANT USAGE ON SCHEMA public TO leitura;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO leitura;
+
+-- as pessoas entram no grupo
+GRANT leitura TO ana, beto, carla;</code></pre>
+          <p>Mudou a regra? Ajusta <b>a role <code>leitura</code></b> — os três já herdam.
+          Entrou alguém? Só <code>GRANT leitura TO ...</code>.</p>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 360 260" role="img" aria-label="A role leitura tem as permissões; Ana, Beto e Carla herdam por serem membros">
+            <defs><marker id="a10m9" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+            <rect class="box" x="110" y="24" width="140" height="46" rx="8"/>
+            <text x="180" y="46" text-anchor="middle" font-size="14" class="hl">leitura</text>
+            <text x="180" y="62" text-anchor="middle" font-size="10" class="cap">tem as permissões</text>
+
+            <line class="ln" x1="75"  y1="128" x2="140" y2="72" marker-end="url(#a10m9)"/>
+            <line class="ln" x1="180" y1="128" x2="180" y2="72" marker-end="url(#a10m9)"/>
+            <line class="ln" x1="285" y1="128" x2="220" y2="72" marker-end="url(#a10m9)"/>
+
+            <g font-size="13" text-anchor="middle">
+              <rect class="box-soft" x="30"  y="128" width="90" height="42" rx="6"/><text x="75"  y="154">ana</text>
+              <rect class="box-soft" x="135" y="128" width="90" height="42" rx="6"/><text x="180" y="154">beto</text>
+              <rect class="box-soft" x="240" y="128" width="90" height="42" rx="6"/><text x="285" y="154">carla</text>
+            </g>
+            <text x="180" y="200" text-anchor="middle" font-size="12" class="cap">cada pessoa é membro de "leitura" e herda as permissões</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10 · EXEMPLO COMPLETO -->
+    <section class="slide">
+      <span class="tag">Exemplo</span>
+      <h2>Dois perfis no schema clinica</h2>
+      <pre><code>-- recepção: lê, cadastra e atualiza
+CREATE USER recepcionista_cli WITH PASSWORD 'Rec@2026';
+GRANT USAGE ON SCHEMA clinica TO recepcionista_cli;
+GRANT SELECT, INSERT, UPDATE
+  ON ALL TABLES IN SCHEMA clinica TO recepcionista_cli;
+
+-- auditoria: só lê
+CREATE USER auditor_cli WITH PASSWORD 'Aud@2026';
+GRANT USAGE  ON SCHEMA clinica TO auditor_cli;
+GRANT SELECT ON ALL TABLES IN SCHEMA clinica TO auditor_cli;</code></pre>
+    </section>
+
+    <!-- 11 · REVOKE -->
+    <section class="slide">
+      <span class="tag">REVOKE</span>
+      <h2>Tirar uma permissão</h2>
+      <pre><code>REVOKE INSERT ON pagamento FROM recepcionista_cli;
+
+REVOKE ALL ON ALL TABLES IN SCHEMA clinica FROM ana;
+
+REVOKE leitura FROM beto;      -- tira do grupo</code></pre>
+      <div class="callout">O que o <code>GRANT</code> dá, o <code>REVOKE</code> tira — na mesma granularidade
+      (uma operação, uma tabela, um schema ou um grupo inteiro).</div>
+    </section>
+
+    <!-- 12 · TESTAR -->
+    <section class="slide">
+      <span class="tag">Na prática</span>
+      <h2>Conferindo o que cada um pode</h2>
+      <div class="split">
+        <div>
+          <pre><code>-- "virar" outra role sem sair da sessão
+SET ROLE auditor_cli;
+INSERT INTO paciente ...   -- ERRO: permission denied
+RESET ROLE;                -- volta a ser você
+
+-- ver os privilégios de uma tabela
+\dp clinica.paciente</code></pre>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 360 220" role="img" aria-label="Com SET ROLE auditor, o INSERT é negado">
+            <defs><marker id="a10m12" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+            <rect class="box-soft" x="30" y="40" width="150" height="40" rx="8"/>
+            <text x="105" y="65" text-anchor="middle" font-size="12">SET ROLE auditor_cli</text>
+            <line class="ln" x1="105" y1="80" x2="105" y2="115" marker-end="url(#a10m12)"/>
+            <rect class="box-soft" x="20" y="115" width="170" height="36" rx="6"/>
+            <text x="105" y="138" text-anchor="middle" font-size="12">INSERT INTO paciente</text>
+            <line class="ln" x1="105" y1="151" x2="105" y2="180" marker-end="url(#a10m12)"/>
+            <rect x="25" y="180" width="160" height="32" fill="none" stroke="#e06a54" stroke-width="2"/>
+            <text x="105" y="201" text-anchor="middle" font-size="12" fill="#e06a54">permission denied</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 13 · O SEMESTRE JUNTO -->
+    <section class="slide">
+      <span class="tag">Juntando o semestre</span>
+      <h2>Usuário + trigger + view</h2>
+      <div class="fig">
+        <svg viewBox="0 0 900 260" role="img" aria-label="O recepcionista faz um INSERT; a trigger de auditoria dispara e a view continua filtrando">
+          <defs><marker id="a10m13" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+          <g text-anchor="middle">
+            <rect class="box-soft" x="20" y="100" width="170" height="60" rx="10"/>
+            <text x="105" y="128" font-size="13">recepcionista</text>
+            <text x="105" y="148" font-size="11" class="cap">tem INSERT (Aula 10)</text>
+            <line class="ln" x1="192" y1="130" x2="270" y2="130" marker-end="url(#a10m13)"/>
+
+            <rect class="box" x="275" y="95" width="180" height="70" rx="10"/>
+            <text x="365" y="123" font-size="14" class="hl">INSERT em pagamento</text>
+            <text x="365" y="145" font-size="11" class="cap">passa nas permissões</text>
+
+            <line class="ln" x1="457" y1="115" x2="535" y2="90" marker-end="url(#a10m13)"/>
+            <line class="ln" x1="457" y1="145" x2="535" y2="175" marker-end="url(#a10m13)"/>
+
+            <rect class="box-soft" x="540" y="55" width="330" height="60" rx="10"/>
+            <text x="705" y="83" font-size="13">trigger de auditoria dispara (Aula 08)</text>
+            <text x="705" y="103" font-size="11" class="cap">grava em log_pagamentos</text>
+
+            <rect class="box-soft" x="540" y="150" width="330" height="60" rx="10"/>
+            <text x="705" y="178" font-size="13">a view mostra só o permitido (Aula 09)</text>
+            <text x="705" y="198" font-size="11" class="cap">SELECT em vw_pagamentos_fiscais</text>
+          </g>
+        </svg>
+      </div>
+      <div class="callout">Permissão, trigger e view são <b>camadas independentes</b> — cada uma faz o seu papel.</div>
+    </section>
+
+    <!-- 14 · SEGURANÇA -->
+    <section class="slide">
+      <span class="tag">Boas práticas</span>
+      <h2>Segurança com roles</h2>
+      <div class="cols">
+        <div class="box"><b>Menor privilégio</b><br>comece com nada e vá liberando o necessário</div>
+        <div class="box"><b>Roles de grupo</b><br>permissão no grupo, pessoas como membros</div>
+        <div class="box"><b>Nada de SUPERUSER na app</b><br>a aplicação usa uma role comum e restrita</div>
+        <div class="box"><b>Senha forte + SCRAM</b><br>e rotação periódica</div>
+        <div class="box"><b>Auditoria periódica</b><br><code>\du</code>, <code>\dp</code> — revise quem tem o quê</div>
+        <div class="box"><b>Uma role por serviço</b><br>não compartilhe credencial entre sistemas</div>
+      </div>
+    </section>
+
+    <!-- 15 · RESUMO -->
+    <section class="slide">
+      <span class="tag">Resumo</span>
+      <h2>O caminho do acesso</h2>
+      <table>
+        <tr><th>Passo</th><th>Comando</th></tr>
+        <tr><td>criar a role</td><td><code>CREATE USER / CREATE ROLE</code></td></tr>
+        <tr><td>deixar chegar ao schema</td><td><code>GRANT CONNECT</code> · <code>GRANT USAGE ON SCHEMA</code></td></tr>
+        <tr><td>permitir operações</td><td><code>GRANT SELECT/INSERT/... ON ...</code></td></tr>
+        <tr><td>tabelas futuras</td><td><code>ALTER DEFAULT PRIVILEGES</code></td></tr>
+        <tr><td>agrupar</td><td><code>GRANT &lt;grupo&gt; TO &lt;pessoa&gt;</code></td></tr>
+        <tr><td>revisar / tirar</td><td><code>\dp</code> · <code>REVOKE</code></td></tr>
+      </table>
+    </section>
+
+    <!-- 16 · PENSE -->
+    <section class="slide">
+      <span class="tag">Pergunta pra pensar</span>
+      <h2>Antes da próxima aula</h2>
+      <div class="split">
+        <div>
+          <p>Numa loja com o schema <code>vendas</code> (tabelas <code>produto</code>,
+          <code>venda</code>, <code>vendedor</code>), monte:</p>
+          <ol>
+            <li>a role de grupo <code>operacao</code>: <code>SELECT</code> em tudo,
+            <code>INSERT</code> só em <code>venda</code>;</li>
+            <li>a role de grupo <code>gerencia</code>: todas as operações em tudo;</li>
+            <li>o usuário <code>joao</code> em <code>operacao</code> e <code>maria</code> em <code>gerencia</code>.</li>
+          </ol>
+          <p class="cap">Não esqueça o <code>USAGE ON SCHEMA</code> nem o padrão para tabelas futuras.</p>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 360 240" role="img" aria-label="operacao e gerencia como grupos, joao e maria como membros">
+            <defs><marker id="a10m16" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+            <rect class="box-soft" x="30" y="30" width="130" height="40" rx="8"/><text x="95" y="55" text-anchor="middle" font-size="13" class="hl">operacao</text>
+            <rect class="box-soft" x="200" y="30" width="130" height="40" rx="8"/><text x="265" y="55" text-anchor="middle" font-size="13" class="hl">gerencia</text>
+            <line class="ln" x1="95" y1="120" x2="95" y2="72" marker-end="url(#a10m16)"/>
+            <line class="ln" x1="265" y1="120" x2="265" y2="72" marker-end="url(#a10m16)"/>
+            <rect class="box-soft" x="45" y="120" width="100" height="40" rx="6"/><text x="95" y="145" text-anchor="middle" font-size="13">joao</text>
+            <rect class="box-soft" x="215" y="120" width="100" height="40" rx="6"/><text x="265" y="145" text-anchor="middle" font-size="13">maria</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 17 · FECHAMENTO -->
+    <section class="slide cover">
+      <img class="crest" src="assets/img/logo_univassouras.png" alt="Universidade de Vassouras">
+      <h1>Dúvidas?</h1>
+      <div class="meta">
+        Prof. Diego Ramos Inácio<br>
+        diego.inacio@univassouras.edu.br<br>
+        Curso de Engenharia de Software — Universidade de Vassouras
+      </div>
+    </section>
+
+  </div>
+
+  <div class="deck-count">1 / 17</div>
+  <div class="deck-nav">
+    <button data-prev aria-label="Slide anterior">‹</button>
+    <button data-next aria-label="Próximo slide">›</button>
+  </div>
+
+  <script src="assets/js/deck.js"></script>
+</body>
+</html>
