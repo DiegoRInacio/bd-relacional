@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Normalização passo a passo — Banco de Dados Relacional</title>
+  <link rel="stylesheet" href="../assets/css/apoio.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.15.0/mermaid.min.js"></script>
+  <style>
+    .mermaid{background:#fbf7f0;border:2px solid var(--dourado);border-radius:12px;padding:1rem;margin:1rem 0;text-align:center}
+    .mermaid svg{max-width:100%;height:auto}
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="inner">
+      <img src="../assets/img/logo_univassouras.png" alt="Universidade de Vassouras">
+      <div class="inst">Universidade de Vassouras<small>Engenharia de Software</small></div>
+      <a class="back" href="../index.html">← Portal</a>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <aside class="toc">
+      <div class="selo">Normalização</div>
+      <a href="#planilha">A planilha crua</a>
+      <a href="#anomalias">As anomalias</a>
+      <a href="#df">Dependências funcionais</a>
+      <a href="#fn1">1ª Forma Normal</a>
+      <a href="#fn2">2ª Forma Normal</a>
+      <a href="#fn3">3ª Forma Normal</a>
+      <a href="#esquema">Esquema final</a>
+      <a href="#ddl">CREATE TABLE</a>
+      <a href="#insert">INSERT na ordem</a>
+      <a href="#join">Juntar de volta</a>
+      <a href="#regra">A regra em 1 frase</a>
+    </aside>
+
+    <main>
+      <div class="titulo">Normalização passo a passo</div>
+      <p class="lead">Um exemplo resolvido do começo ao fim: de uma planilha bagunçada até um
+      esquema em 3ª Forma Normal. Refaça este roteiro no seu próprio problema.</p>
+
+      <section id="planilha">
+        <h2>A planilha crua</h2>
+        <p>Uma loja registra os pedidos numa tabela só — <b>uma linha por item</b> de pedido:</p>
+        <table class="ref">
+          <tr><th>id_pedido</th><th>id_cli</th><th>nome_cliente</th><th>telefone_cliente</th><th>id_prod</th><th>nome_produto</th><th>preco</th><th>qtd</th></tr>
+          <tr><td>1</td><td>C1</td><td>João Silva</td><td>9999-1111, 3333-2222</td><td>P1</td><td>Notebook</td><td>3000</td><td>1</td></tr>
+          <tr><td>1</td><td>C1</td><td>João Silva</td><td>9999-1111, 3333-2222</td><td>P2</td><td>Mouse</td><td>80</td><td>2</td></tr>
+          <tr><td>2</td><td>C2</td><td>Maria Lima</td><td>8888-4444</td><td>P3</td><td>Smartphone</td><td>2000</td><td>1</td></tr>
+          <tr><td>3</td><td>C1</td><td>João Silva</td><td>9999-1111, 3333-2222</td><td>P4</td><td>Impressora</td><td>800</td><td>1</td></tr>
+        </table>
+        <div class="nota">A chave desta tabela é o par <b><code>(id_pedido, id_prod)</code></b> — é o que
+        identifica cada linha sem repetir.</div>
+      </section>
+
+      <section id="anomalias">
+        <h2>As anomalias que essa estrutura causa</h2>
+        <ul>
+          <li><b>Inserção:</b> não dá para cadastrar um produto novo (ou um cliente) sem que exista um pedido dele.</li>
+          <li><b>Alteração:</b> o João mudou de telefone → é preciso corrigir <b>todas</b> as linhas dele.</li>
+          <li><b>Exclusão:</b> apagar o pedido 2 apaga junto o <b>único</b> registro da Maria e do Smartphone.</li>
+        </ul>
+      </section>
+
+      <section id="df">
+        <h2>Dependências funcionais</h2>
+        <p><b>X → Y</b> lê-se "sabendo X, o Y é sempre o mesmo". As desta planilha:</p>
+        <div class="code"><pre><code>id_cli                 -&gt; nome_cliente
+id_prod                -&gt; nome_produto, preco
+id_pedido              -&gt; id_cli
+(id_pedido, id_prod)   -&gt; qtd
+-- telefone_cliente é multivalorado: id_cli -&gt;&gt; telefone</code></pre></div>
+      </section>
+
+      <section id="fn1">
+        <h2>1ª Forma Normal — valores atômicos</h2>
+        <p><b>Regra:</b> cada célula guarda um único valor; sem grupos de colunas repetidos;
+        cada linha identificável.</p>
+        <p><b>Problema:</b> <code>telefone_cliente</code> guarda dois números.</p>
+        <p><b>Correção:</b> o atributo multivalorado sai para uma tabela própria.</p>
+        <table class="ref">
+          <tr><th colspan="2">telefone_cliente</th></tr>
+          <tr><th>id_cli</th><th>telefone</th></tr>
+          <tr><td>C1</td><td>9999-1111</td></tr>
+          <tr><td>C1</td><td>3333-2222</td></tr>
+          <tr><td>C2</td><td>8888-4444</td></tr>
+        </table>
+      </section>
+
+      <section id="fn2">
+        <h2>2ª Forma Normal — sem dependência parcial</h2>
+        <p><b>Regra:</b> estar em 1FN + toda coluna não-chave depende da <b>chave inteira</b>,
+        não de um pedaço dela. (Só importa quando a chave é composta.)</p>
+        <p>A chave é <code>(id_pedido, id_prod)</code>. Mas:</p>
+        <ul>
+          <li><code>nome_produto</code>, <code>preco</code> dependem só de <code>id_prod</code>;</li>
+          <li><code>id_cli</code> depende só de <code>id_pedido</code>.</li>
+        </ul>
+        <p>São dependências <b>parciais</b> → separa em três tabelas:</p>
+        <div class="code"><pre><code>Pedido      (id_pedido PK, id_cli, nome_cliente)
+Produto     (id_prod PK, nome_produto, preco)
+ItemPedido  (id_pedido, id_prod, qtd)   PK (id_pedido, id_prod)</code></pre></div>
+      </section>
+
+      <section id="fn3">
+        <h2>3ª Forma Normal — sem dependência transitiva</h2>
+        <p><b>Regra:</b> estar em 2FN + coluna não-chave não depende de <b>outra coluna não-chave</b>.</p>
+        <p>Na tabela <code>Pedido</code>: <code>nome_cliente</code> depende de <code>id_cli</code>,
+        que depende de <code>id_pedido</code>. É uma dependência <b>transitiva</b>.</p>
+        <p><b>Correção:</b> os dados do cliente saem para a tabela <code>Cliente</code>.</p>
+        <div class="code"><pre><code>Cliente  (id_cli PK, nome_cliente)
+Pedido   (id_pedido PK, id_cli FK)</code></pre></div>
+      </section>
+
+      <section id="esquema">
+        <h2>Esquema final (3FN)</h2>
+        <div class="mermaid">
+erDiagram
+    CLIENTE ||--o{ PEDIDO : "faz"
+    CLIENTE ||--o{ TELEFONE_CLIENTE : "tem"
+    PEDIDO ||--|{ ITEM_PEDIDO : "contem"
+    PRODUTO ||--o{ ITEM_PEDIDO : "aparece em"
+    CLIENTE { int id_cli PK  string nome_cliente }
+    TELEFONE_CLIENTE { int id_cli FK  string telefone }
+    PEDIDO { int id_pedido PK  int id_cli FK }
+    ITEM_PEDIDO { int id_pedido FK  int id_prod FK  int qtd }
+    PRODUTO { int id_prod PK  string nome_produto  numeric preco }
+        </div>
+      </section>
+
+      <section id="ddl">
+        <h2>O esquema em CREATE TABLE</h2>
+        <div class="code"><pre><code>CREATE TABLE cliente (
+    id_cli       VARCHAR(6)   PRIMARY KEY,
+    nome_cliente VARCHAR(100) NOT NULL
+);
+CREATE TABLE telefone_cliente (
+    id_cli   VARCHAR(6) REFERENCES cliente(id_cli),
+    telefone VARCHAR(20),
+    PRIMARY KEY (id_cli, telefone)
+);
+CREATE TABLE produto (
+    id_prod      VARCHAR(6)    PRIMARY KEY,
+    nome_produto VARCHAR(100)  NOT NULL,
+    preco        NUMERIC(10,2) NOT NULL CHECK (preco &gt; 0)
+);
+CREATE TABLE pedido (
+    id_pedido INT PRIMARY KEY,
+    id_cli    VARCHAR(6) NOT NULL REFERENCES cliente(id_cli)
+);
+CREATE TABLE item_pedido (
+    id_pedido  INT        REFERENCES pedido(id_pedido),
+    id_prod    VARCHAR(6) REFERENCES produto(id_prod),
+    qtd        INT NOT NULL CHECK (qtd &gt; 0),
+    PRIMARY KEY (id_pedido, id_prod)
+);</code></pre></div>
+      </section>
+
+      <section id="insert">
+        <h2>INSERT na ordem certa (pais antes dos filhos)</h2>
+        <div class="code"><pre><code>INSERT INTO cliente VALUES ('C1','João Silva'), ('C2','Maria Lima');
+
+INSERT INTO telefone_cliente VALUES
+  ('C1','9999-1111'), ('C1','3333-2222'), ('C2','8888-4444');
+
+INSERT INTO produto VALUES
+  ('P1','Notebook',3000), ('P2','Mouse',80),
+  ('P3','Smartphone',2000), ('P4','Impressora',800);
+
+INSERT INTO pedido VALUES (1,'C1'), (2,'C2'), (3,'C1');
+
+INSERT INTO item_pedido VALUES
+  (1,'P1',1), (1,'P2',2), (2,'P3',1), (3,'P4',1);</code></pre></div>
+      </section>
+
+      <section id="join">
+        <h2>Juntar tudo de volta</h2>
+        <p>A "planilha" original volta com um <code>SELECT</code> + <code>JOIN</code>:</p>
+        <div class="code"><pre><code>SELECT p.id_pedido, c.nome_cliente, pr.nome_produto, i.qtd
+FROM   pedido      p
+JOIN   cliente     c  ON c.id_cli   = p.id_cli
+JOIN   item_pedido i  ON i.id_pedido = p.id_pedido
+JOIN   produto     pr ON pr.id_prod  = i.id_prod;</code></pre></div>
+        <div class="nota">O dado agora está <b>uma vez só</b> em cada lugar. Trocar o telefone
+        do João = alterar <b>uma linha</b>.</div>
+      </section>
+
+      <section id="regra">
+        <h2>A regra em 1 frase</h2>
+        <div class="nota"><b>Toda coluna depende da chave, da chave inteira, e de nada além da chave.</b><br>
+        "da chave" = 1FN · "da chave inteira" = 2FN · "de nada além da chave" = 3FN.</div>
+      </section>
+
+    </main>
+
+    <div class="rodape">Banco de Dados Relacional · Prof. Me. Diego Ramos Inácio — Universidade de Vassouras</div>
+  </div>
+
+  <script>
+    mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+      fontFamily: '"Segoe UI", Tahoma, sans-serif', fontSize: '15px',
+      primaryColor: '#f3e0e0', primaryBorderColor: '#7a1f1f', primaryTextColor: '#2c2320',
+      lineColor: '#7a1f1f', textColor: '#2c2320' } });
+  </script>
+  <script src="../assets/js/apoio.js"></script>
+</body>
+</html>

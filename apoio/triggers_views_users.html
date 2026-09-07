@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Triggers, Views e Usuários — Banco de Dados Relacional</title>
+  <link rel="stylesheet" href="../assets/css/apoio.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="inner">
+      <img src="../assets/img/logo_univassouras.png" alt="Universidade de Vassouras">
+      <div class="inst">Universidade de Vassouras<small>Engenharia de Software</small></div>
+      <a class="back" href="../index.html">← Portal</a>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <aside class="toc">
+      <div class="selo">Triggers · Views · Usuários</div>
+      <a href="#cenario">Cenário</a>
+      <a href="#trg-partes">Trigger: as 2 partes</a>
+      <a href="#trg-funcao">Função (template)</a>
+      <a href="#trg-create">CREATE TRIGGER</a>
+      <a href="#trg-newold">NEW e OLD</a>
+      <a href="#trg-block">Bloquear (BEFORE + RAISE)</a>
+      <a href="#trg-log">Tabela de log</a>
+      <a href="#view">CREATE VIEW</a>
+      <a href="#view-mat">View materializada</a>
+      <a href="#view-instead">INSTEAD OF</a>
+      <a href="#role-criar">Criar role</a>
+      <a href="#role-acesso">Os 2 níveis de acesso</a>
+      <a href="#role-grant">GRANT nas tabelas</a>
+      <a href="#role-grupo">Role de grupo</a>
+      <a href="#role-revoke">REVOKE e testar</a>
+    </aside>
+
+    <main>
+      <div class="titulo">Triggers, Views e Usuários</div>
+      <p class="lead">Modelos prontos de PL/pgSQL, views e gestão de <em>roles</em> no PostgreSQL.
+      Adapte os nomes ao seu cenário.</p>
+
+      <section id="cenario">
+        <h2>Cenário de exemplo</h2>
+        <div class="code"><pre><code>CREATE SCHEMA loja;
+
+CREATE TABLE loja.produto (
+    id     SERIAL PRIMARY KEY,
+    nome   VARCHAR(100) NOT NULL,
+    preco  NUMERIC(10,2) NOT NULL CHECK (preco &gt; 0),
+    estoque INT NOT NULL DEFAULT 0
+);
+CREATE TABLE loja.venda (
+    id         SERIAL PRIMARY KEY,
+    id_produto INT NOT NULL REFERENCES loja.produto(id),
+    quantidade INT NOT NULL CHECK (quantidade &gt; 0),
+    data_venda TIMESTAMP NOT NULL DEFAULT NOW()
+);</code></pre></div>
+      </section>
+
+      <h2 style="margin-top:2.5rem">TRIGGERS</h2>
+
+      <section id="trg-partes">
+        <h2>Uma trigger tem duas partes</h2>
+        <ol>
+          <li>a <b>função</b> em PL/pgSQL — contém a lógica, retorna <code>TRIGGER</code>;</li>
+          <li>o <b>CREATE TRIGGER</b> — liga a função a uma tabela, um evento e um momento.</li>
+        </ol>
+      </section>
+
+      <section id="trg-funcao">
+        <h2>Função — template</h2>
+        <div class="code"><pre><code>CREATE OR REPLACE FUNCTION loja.fn_log_venda()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- lógica aqui; os dados da linha chegam por NEW (e/ou OLD)
+    INSERT INTO loja.log_venda (id_venda, quantidade, usuario_bd, momento)
+    VALUES (NEW.id, NEW.quantidade, CURRENT_USER, NOW());
+
+    RETURN NEW;   -- AFTER: obrigatório, não altera a linha
+END;
+$$ LANGUAGE plpgsql;</code></pre></div>
+      </section>
+
+      <section id="trg-create">
+        <h2>CREATE TRIGGER</h2>
+        <div class="code"><pre><code>CREATE TRIGGER trg_log_venda
+AFTER INSERT ON loja.venda      -- momento (BEFORE/AFTER) + evento + tabela
+FOR EACH ROW                    -- uma vez por linha afetada
+EXECUTE FUNCTION loja.fn_log_venda();
+
+-- pode combinar eventos:  AFTER INSERT OR UPDATE ON ...
+-- remover:                DROP TRIGGER trg_log_venda ON loja.venda;</code></pre></div>
+        <table class="ref">
+          <tr><th>Momento</th><th>Roda</th><th>Serve para</th></tr>
+          <tr><td><code>BEFORE</code></td><td>antes de gravar</td><td>validar, bloquear, ajustar <code>NEW</code></td></tr>
+          <tr><td><code>AFTER</code></td><td>depois de gravar</td><td>log / auditoria, atualizar outra tabela</td></tr>
+          <tr><td><code>INSTEAD OF</code></td><td>no lugar da operação</td><td>tornar uma <em>view</em> gravável</td></tr>
+        </table>
+      </section>
+
+      <section id="trg-newold">
+        <h2>NEW e OLD</h2>
+        <table class="ref">
+          <tr><th>Evento</th><th>OLD</th><th>NEW</th></tr>
+          <tr><td>INSERT</td><td>—</td><td>a linha nova</td></tr>
+          <tr><td>UPDATE</td><td>valores antigos</td><td>valores propostos</td></tr>
+          <tr><td>DELETE</td><td>a linha apagada</td><td>—</td></tr>
+        </table>
+        <p>Acesso por coluna: <code>NEW.preco</code>, <code>OLD.estoque</code>. Comparar o que mudou:
+        <code>IF NEW.preco &lt;&gt; OLD.preco THEN ...</code></p>
+      </section>
+
+      <section id="trg-block">
+        <h2>Bloquear uma operação — BEFORE + RAISE EXCEPTION</h2>
+        <div class="code"><pre><code>CREATE OR REPLACE FUNCTION loja.fn_checa_estoque()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.quantidade &gt; (SELECT estoque FROM loja.produto WHERE id = NEW.id_produto) THEN
+        RAISE EXCEPTION 'Estoque insuficiente para o produto %', NEW.id_produto;
+    END IF;
+    RETURN NEW;   -- BEFORE: RETURN NEW deixa a operação seguir
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_checa_estoque
+BEFORE INSERT ON loja.venda
+FOR EACH ROW EXECUTE FUNCTION loja.fn_checa_estoque();</code></pre></div>
+      </section>
+
+      <section id="trg-log">
+        <h2>Como projetar a tabela de log</h2>
+        <ul>
+          <li><b>Sem FK</b> — a referência é lógica (<code>INT</code>, não <code>REFERENCES</code>): o log tem que sobreviver se a venda for apagada.</li>
+          <li><b>Snapshot</b> — guarde também os valores da época (nome, preço), para o log continuar legível.</li>
+          <li><b>Append-only</b> — só a trigger insere: <code>REVOKE UPDATE, DELETE ON loja.log_venda FROM ...</code></li>
+          <li><b>Nunca deleta linha de log</b> — se precisar espaço, arquiva.</li>
+        </ul>
+        <div class="nota aviso"><b>Evite:</b> FK com <code>ON DELETE CASCADE</code> num log — apagar a venda apagaria o registro de auditoria dela.</div>
+        <div class="code"><pre><code>CREATE TABLE loja.log_venda (
+    id_log     SERIAL PRIMARY KEY,
+    id_venda   INT,                 -- sem FK (referência lógica)
+    quantidade INT,
+    usuario_bd VARCHAR(50),
+    momento    TIMESTAMP DEFAULT NOW()
+);</code></pre></div>
+      </section>
+
+      <h2 style="margin-top:2.5rem">VIEWS</h2>
+
+      <section id="view">
+        <h2>CREATE VIEW</h2>
+        <div class="code"><pre><code>-- guarda um SELECT com um nome; não guarda dados
+CREATE VIEW loja.vw_vendas_detalhe AS
+SELECT v.id, p.nome AS produto, v.quantidade,
+       v.quantidade * p.preco AS total
+FROM   loja.venda  v
+JOIN   loja.produto p ON p.id = v.id_produto;
+
+-- usar como tabela
+SELECT * FROM loja.vw_vendas_detalhe WHERE total &gt; 500;
+
+-- trocar a lógica sem recriar (preserva os GRANTs)
+CREATE OR REPLACE VIEW loja.vw_vendas_detalhe AS SELECT ...;</code></pre></div>
+        <div class="nota">A view <b>sempre reflete</b> as tabelas base — não existe "atualizar a view".
+        Usos: esconder um <code>JOIN</code> grande, padronizar um cálculo, controlar acesso.</div>
+      </section>
+
+      <section id="view-mat">
+        <h2>View materializada</h2>
+        <div class="code"><pre><code>CREATE MATERIALIZED VIEW loja.mv_faturamento AS
+SELECT date_trunc('month', data_venda) AS mes,
+       SUM(quantidade) AS itens
+FROM loja.venda GROUP BY 1;
+
+REFRESH MATERIALIZED VIEW loja.mv_faturamento;              -- recalcula
+REFRESH MATERIALIZED VIEW CONCURRENTLY loja.mv_faturamento; -- sem travar leituras</code></pre></div>
+        <table class="ref">
+          <tr><th></th><th>VIEW</th><th>MATERIALIZED VIEW</th></tr>
+          <tr><td>guarda dados?</td><td>não</td><td>sim (no disco)</td></tr>
+          <tr><td>sempre atual?</td><td>sim</td><td>só até o próximo <code>REFRESH</code></td></tr>
+          <tr><td>consulta</td><td>roda o <code>SELECT</code></td><td>muito rápida (lê o resultado pronto)</td></tr>
+        </table>
+      </section>
+
+      <section id="view-instead">
+        <h2>INSTEAD OF — tornar a view gravável</h2>
+        <p>Uma view <b>simples</b> (uma tabela, sem <code>JOIN</code>/<code>GROUP BY</code>) já aceita
+        <code>INSERT</code>/<code>UPDATE</code>/<code>DELETE</code>. Uma view <b>complexa</b> precisa de um
+        trigger <code>INSTEAD OF</code> que direciona a gravação para a tabela certa.</p>
+        <div class="code"><pre><code>CREATE TRIGGER trg_ins_vw
+INSTEAD OF INSERT ON loja.vw_vendas_detalhe
+FOR EACH ROW EXECUTE FUNCTION loja.fn_insere_venda();</code></pre></div>
+      </section>
+
+      <h2 style="margin-top:2.5rem">USUÁRIOS E PERMISSÕES</h2>
+
+      <section id="role-criar">
+        <h2>Criar role</h2>
+        <div class="code"><pre><code>CREATE USER ana WITH PASSWORD 'S3nh@Forte';   -- = CREATE ROLE ana LOGIN
+CREATE ROLE leitura;                          -- role sem login: um "grupo"
+
+-- \du  lista as roles     \password ana  troca a senha</code></pre></div>
+        <table class="ref">
+          <tr><th>Atributo</th><th>Significa</th></tr>
+          <tr><td><code>LOGIN</code></td><td>pode conectar (é um "usuário")</td></tr>
+          <tr><td><code>SUPERUSER</code></td><td>ignora todas as permissões — quase nunca use</td></tr>
+          <tr><td><code>CREATEDB</code> / <code>CREATEROLE</code></td><td>pode criar bancos / outras roles</td></tr>
+        </table>
+      </section>
+
+      <section id="role-acesso">
+        <h2>Permissão tem dois níveis</h2>
+        <div class="code"><pre><code>-- 1) chegar até as tabelas
+GRANT CONNECT ON DATABASE loja TO ana;
+GRANT USAGE   ON SCHEMA   loja TO ana;   -- SEM isso: "permission denied for schema loja"
+
+-- 2) operar nas tabelas (próximo bloco)</code></pre></div>
+      </section>
+
+      <section id="role-grant">
+        <h2>GRANT nas tabelas</h2>
+        <div class="code"><pre><code>GRANT SELECT ON loja.produto TO auditor;                 -- uma tabela
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+  ON ALL TABLES IN SCHEMA loja TO atendente;             -- todas as de agora
+
+GRANT USAGE ON ALL SEQUENCES IN SCHEMA loja TO atendente; -- p/ o SERIAL no INSERT
+
+-- tabelas criadas DEPOIS também:
+ALTER DEFAULT PRIVILEGES IN SCHEMA loja
+  GRANT SELECT ON TABLES TO leitura;</code></pre></div>
+        <div class="nota">O <b>dono</b> da tabela já tem tudo. O <code>GRANT</code> serve para os outros.</div>
+      </section>
+
+      <section id="role-grupo">
+        <h2>Role de grupo — gerencie o grupo, não a pessoa</h2>
+        <div class="code"><pre><code>CREATE ROLE leitura;
+GRANT USAGE ON SCHEMA loja TO leitura;
+GRANT SELECT ON ALL TABLES IN SCHEMA loja TO leitura;
+
+GRANT leitura TO ana, beto, carla;   -- entram no grupo e herdam as permissões</code></pre></div>
+        <p>Mudou a regra? Ajusta a role <code>leitura</code> — os três já herdam.</p>
+      </section>
+
+      <section id="role-revoke">
+        <h2>REVOKE e testar</h2>
+        <div class="code"><pre><code>REVOKE INSERT ON loja.venda FROM atendente;
+REVOKE ALL    ON ALL TABLES IN SCHEMA loja FROM ana;
+REVOKE leitura FROM beto;            -- tira do grupo
+
+-- testar sem sair da sessão:
+SET ROLE auditor;
+INSERT INTO loja.produto ...   -- ERRO: permission denied
+RESET ROLE;
+
+\dp loja.produto               -- ver os privilégios da tabela</code></pre></div>
+        <div class="nota"><b>Menor privilégio:</b> comece com nada e vá liberando o necessário.
+        A aplicação <b>nunca</b> conecta como <code>SUPERUSER</code> nem como o dono do banco.</div>
+      </section>
+
+    </main>
+
+    <div class="rodape">Banco de Dados Relacional · Prof. Me. Diego Ramos Inácio — Universidade de Vassouras</div>
+  </div>
+
+  <script src="../assets/js/apoio.js"></script>
+</body>
+</html>

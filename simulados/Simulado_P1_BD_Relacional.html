@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulado P1 (interativo) — Banco de Dados Relacional</title>
+  <link rel="stylesheet" href="../assets/css/apoio.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.14.2/sql-wasm.js"></script>
+  <style>
+    .sim{max-width:900px;margin:0 auto;padding:0 1.5rem 4rem}
+    .sim .titulo{font-family:var(--serif);font-size:2rem;color:var(--vinho);margin-top:2rem}
+    .badge{display:inline-block;background:var(--dourado-claro);color:var(--vinho);
+      border:1px solid var(--dourado);border-radius:999px;padding:.2rem .8rem;font-size:.8rem;font-weight:700;margin-right:.4rem}
+    .placar{position:sticky;top:0;z-index:5;background:var(--papel);border-bottom:1px solid var(--linha);
+      padding:.7rem 0;margin:.5rem 0 1.5rem;font-size:.95rem;color:var(--cinza)}
+    .placar b{color:var(--vinho);font-size:1.15rem}
+    .parte{font-family:var(--serif);font-size:1.35rem;color:var(--vinho);border-left:4px solid var(--dourado);
+      padding-left:.6rem;margin:2.4rem 0 1rem}
+    .q{background:var(--papel-2);border:1px solid var(--linha);border-radius:10px;padding:1.1rem 1.3rem;margin:1rem 0}
+    .q .num{font-family:var(--serif);color:var(--dourado);font-weight:700;font-size:.85rem;letter-spacing:.1em}
+    .q p.enun{margin:.3rem 0 .7rem}
+    .q code{background:var(--dourado-claro);padding:.05rem .3rem;border-radius:4px;font-size:.9em}
+    .q textarea{width:100%;min-height:5.5rem;background:#2b2320;color:#f3ede2;border:1.5px solid rgba(255,255,255,.2);
+      border-radius:8px;padding:.7rem .9rem;font-family:var(--mono);font-size:.95rem;line-height:1.5;resize:vertical}
+    .q textarea:focus{outline:2px solid var(--dourado)}
+    .opt{display:block;padding:.45rem .2rem;cursor:pointer}
+    .opt input{margin-right:.5rem}
+    .btn{background:var(--vinho);color:#fff;border:none;border-radius:6px;padding:.45rem 1.2rem;
+      font-weight:700;font-size:.92rem;cursor:pointer;margin-top:.6rem}
+    .btn:hover{background:var(--vinho-escuro)}
+    .btn.sec{background:transparent;color:var(--vinho);border:1px solid var(--vinho);margin-left:.5rem}
+    .fb{margin-top:.7rem;font-size:.93rem;padding:.6rem .8rem;border-radius:6px;display:none}
+    .fb.ok{display:block;background:#eaf6ec;border:1px solid #7fc98f;color:#1f6b31}
+    .fb.bad{display:block;background:#fdeeec;border:1px solid #e6a08f;color:#9a3720}
+    .grid-res{margin-top:.6rem;overflow-x:auto}
+    .grid-res table{border-collapse:collapse;font-size:.88rem}
+    .grid-res th,.grid-res td{border:1px solid var(--linha);padding:.3rem .6rem;text-align:left}
+    .grid-res th{background:var(--dourado-claro);color:var(--vinho)}
+    #loading{color:var(--cinza);font-style:italic}
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="inner">
+      <img src="../assets/img/logo_univassouras.png" alt="Universidade de Vassouras">
+      <div class="inst">Universidade de Vassouras<small>Engenharia de Software</small></div>
+      <a class="back" href="../index.html">← Portal</a>
+    </div>
+  </header>
+
+  <div class="sim">
+    <div class="titulo">Simulado P1 — interativo</div>
+    <p><span class="badge">Valor 1,0 ponto</span><span class="badge">Para casa</span>
+    <span class="badge">Sem consulta na P1</span></p>
+    <p style="color:var(--cinza);font-size:.95rem">
+      As consultas rodam num <b>SQLite dentro do navegador</b> — a sintaxe do PostgreSQL é
+      praticamente igual (só o <code>SERIAL</code> vira <code>INTEGER PRIMARY KEY</code>).
+      Escreva, clique em <b>Executar</b> e veja se acertou. <b id="loading">carregando o banco…</b>
+    </p>
+
+    <div class="placar" id="placar">Acertos: <b><span id="acertos">0</span> / 11</b> &nbsp;·&nbsp; <span id="pdet"></span></div>
+
+    <h3 style="font-family:var(--serif);color:var(--vinho)">O banco do simulado</h3>
+    <div class="code"><pre><code>cliente(id, nome, cidade)
+produto(id, nome, preco)
+pedido(id, id_cliente → cliente, data_pedido, status)
+item_pedido(id_pedido → pedido, id_produto → produto, quantidade)
+
+-- 4 clientes (Davi não tem nenhum pedido)
+-- 4 produtos · 4 pedidos · 6 itens</code></pre></div>
+
+    <!-- ============ PARTE 1 ============ -->
+    <div class="parte">Parte 1 — Normalização &nbsp;<span style="font-size:.8rem;color:var(--cinza)">(múltipla escolha)</span></div>
+
+    <div class="q" data-mc="a">
+      <div class="num">QUESTÃO 1</div>
+      <p class="enun">A planilha <code>pedido(num, cliente, telefone_cliente, produto, preco)</code> tem,
+      numa linha, <code>telefone_cliente = '9999-1111, 3333-2222'</code>. Qual forma normal é violada primeiro?</p>
+      <label class="opt"><input type="radio" name="q1" value="a"> 1ª Forma Normal (valor não atômico)</label>
+      <label class="opt"><input type="radio" name="q1" value="b"> 2ª Forma Normal (dependência parcial)</label>
+      <label class="opt"><input type="radio" name="q1" value="c"> 3ª Forma Normal (dependência transitiva)</label>
+      <label class="opt"><input type="radio" name="q1" value="d"> Nenhuma — a tabela está normalizada</label>
+      <button class="btn" data-check-mc>Verificar</button>
+      <div class="fb"></div>
+    </div>
+
+    <div class="q" data-mc="b">
+      <div class="num">QUESTÃO 2</div>
+      <p class="enun">Numa tabela com chave composta <code>(id_pedido, id_produto)</code>, a coluna
+      <code>nome_produto</code> depende <b>só</b> de <code>id_produto</code>. Isso é uma dependência…</p>
+      <label class="opt"><input type="radio" name="q2" value="a"> total (está tudo certo)</label>
+      <label class="opt"><input type="radio" name="q2" value="b"> parcial — viola a 2FN</label>
+      <label class="opt"><input type="radio" name="q2" value="c"> transitiva — viola a 3FN</label>
+      <label class="opt"><input type="radio" name="q2" value="d"> multivalorada — viola a 1FN</label>
+      <button class="btn" data-check-mc>Verificar</button>
+      <div class="fb"></div>
+    </div>
+
+    <div class="q" data-mc="d">
+      <div class="num">QUESTÃO 3</div>
+      <p class="enun">Normalizar até a 3FN a planilha
+      <code>pedido(num, id_cli, nome_cli, tel_cli, id_prod, nome_prod, preco, qtd)</code>,
+      sabendo que <code>tel_cli</code> é multivalorado, resulta em quantas tabelas?</p>
+      <label class="opt"><input type="radio" name="q3" value="a"> 2</label>
+      <label class="opt"><input type="radio" name="q3" value="b"> 3</label>
+      <label class="opt"><input type="radio" name="q3" value="c"> 4</label>
+      <label class="opt"><input type="radio" name="q3" value="d"> 5 (Cliente, TelefoneCliente, Pedido, Produto, ItemPedido)</label>
+      <button class="btn" data-check-mc>Verificar</button>
+      <div class="fb"></div>
+    </div>
+
+    <!-- ============ PARTE 2 ============ -->
+    <div class="parte">Parte 2 — DDL &nbsp;<span style="font-size:.8rem;color:var(--cinza)">(escreva; a correção confere as palavras-chave)</span></div>
+
+    <div class="q" data-kw="create table|categoria|primary key|not null|unique">
+      <div class="num">QUESTÃO 4</div>
+      <p class="enun">Escreva o <code>CREATE TABLE</code> de <code>categoria</code> com:
+      <code>id</code> (chave primária, auto-incremento), <code>nome</code> (texto, <b>não nulo</b> e <b>único</b>).</p>
+      <textarea placeholder="CREATE TABLE categoria (&#10;    ...&#10;);"></textarea>
+      <button class="btn" data-check-kw>Verificar</button>
+      <div class="fb"></div>
+    </div>
+
+    <div class="q" data-kw="create table|produto|references categoria|check|> 0">
+      <div class="num">QUESTÃO 5</div>
+      <p class="enun">Escreva o <code>CREATE TABLE</code> de <code>produto</code> com:
+      <code>id</code> (PK, auto), <code>nome</code> (não nulo), <code>preco</code> que <b>só aceita valores &gt; 0</b>,
+      e <code>id_categoria</code> como <b>FK</b> para <code>categoria</code>.</p>
+      <textarea placeholder="CREATE TABLE produto (&#10;    ...&#10;);"></textarea>
+      <button class="btn" data-check-kw>Verificar</button>
+      <div class="fb"></div>
+    </div>
+
+    <!-- ============ PARTE 3 ============ -->
+    <div class="parte">Parte 3 — Consultas &nbsp;<span style="font-size:.8rem;color:var(--cinza)">(rodam no banco de verdade)</span></div>
+
+    <div class="q sql" data-exp="SELECT nome, cidade FROM cliente WHERE cidade='SP' ORDER BY nome" data-ordered="1">
+      <div class="num">QUESTÃO 6</div>
+      <p class="enun">Selecione o <b>nome</b> e a <b>cidade</b> dos clientes de <code>'SP'</code>,
+      em ordem alfabética de nome.</p>
+      <textarea>SELECT </textarea>
+      <button class="btn" data-run>Executar</button>
+      <div class="fb"></div><div class="grid-res"></div>
+    </div>
+
+    <div class="q sql" data-exp="SELECT p.id, c.nome FROM pedido p JOIN cliente c ON c.id=p.id_cliente WHERE p.status='pago' ORDER BY p.id">
+      <div class="num">QUESTÃO 7</div>
+      <p class="enun">Para todo pedido com <code>status = 'pago'</code>, mostre o <b>id do pedido</b> e o
+      <b>nome do cliente</b> (<code>INNER JOIN</code> entre <code>pedido</code> e <code>cliente</code>).</p>
+      <textarea>SELECT </textarea>
+      <button class="btn" data-run>Executar</button>
+      <div class="fb"></div><div class="grid-res"></div>
+    </div>
+
+    <div class="q sql" data-exp="SELECT c.nome, COUNT(p.id) AS total FROM cliente c LEFT JOIN pedido p ON p.id_cliente=c.id GROUP BY c.nome ORDER BY c.nome">
+      <div class="num">QUESTÃO 8</div>
+      <p class="enun">Liste <b>todos</b> os clientes (mesmo os sem pedido) com o <b>nome</b> e a
+      <b>quantidade de pedidos</b> de cada um. Use <code>LEFT JOIN</code> + <code>GROUP BY</code>.</p>
+      <textarea>SELECT </textarea>
+      <button class="btn" data-run>Executar</button>
+      <div class="fb"></div><div class="grid-res"></div>
+    </div>
+
+    <div class="q sql" data-exp="SELECT ip.id_pedido, SUM(ip.quantidade*pr.preco) AS total FROM item_pedido ip JOIN produto pr ON pr.id=ip.id_produto GROUP BY ip.id_pedido ORDER BY ip.id_pedido">
+      <div class="num">QUESTÃO 9</div>
+      <p class="enun">Calcule o <b>valor total</b> de cada pedido (soma de
+      <code>quantidade × preco</code>). Mostre o <b>id do pedido</b> e o <b>total</b>.</p>
+      <textarea>SELECT </textarea>
+      <button class="btn" data-run>Executar</button>
+      <div class="fb"></div><div class="grid-res"></div>
+    </div>
+
+    <div class="q sql mut" data-exp="SELECT nome, cidade FROM cliente WHERE nome='Elena Rocha'"
+         data-expect-rows="Elena Rocha|PR">
+      <div class="num">QUESTÃO 10</div>
+      <p class="enun">Cadastre a cliente <b>Elena Rocha</b>, da cidade <b>PR</b> (deixe o <code>id</code> ser gerado).</p>
+      <textarea>INSERT INTO cliente </textarea>
+      <button class="btn" data-run>Executar</button>
+      <div class="fb"></div><div class="grid-res"></div>
+    </div>
+
+    <div class="q sql mut" data-exp="SELECT status FROM pedido WHERE id=11"
+         data-expect-rows="pago">
+      <div class="num">QUESTÃO 11</div>
+      <p class="enun">O pedido <code>11</code> foi pago. Atualize o <code>status</code> dele para <code>'pago'</code>.</p>
+      <textarea>UPDATE pedido </textarea>
+      <button class="btn" data-run>Executar</button>
+      <div class="fb"></div><div class="grid-res"></div>
+    </div>
+
+    <div class="rodape" style="border-top:1px solid var(--linha);margin-top:3rem;padding-top:1.4rem">
+      Simulado — Banco de Dados Relacional · Prof. Me. Diego Ramos Inácio. O gabarito completo é
+      discutido em aula.
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    var db = null;
+    var SEED = [
+      "CREATE TABLE cliente (id INTEGER PRIMARY KEY, nome TEXT NOT NULL, cidade TEXT);",
+      "CREATE TABLE produto (id INTEGER PRIMARY KEY, nome TEXT NOT NULL, preco REAL NOT NULL);",
+      "CREATE TABLE pedido (id INTEGER PRIMARY KEY, id_cliente INTEGER NOT NULL, data_pedido TEXT, status TEXT);",
+      "CREATE TABLE item_pedido (id_pedido INTEGER, id_produto INTEGER, quantidade INTEGER, PRIMARY KEY(id_pedido,id_produto));",
+      "INSERT INTO cliente VALUES (1,'Ana Prado','SP'),(2,'Beto Nunes','RJ'),(3,'Carla Dias','SP'),(4,'Davi Melo','MG');",
+      "INSERT INTO produto VALUES (1,'Notebook',3000),(2,'Mouse',80),(3,'Teclado',150),(4,'Monitor',900);",
+      "INSERT INTO pedido VALUES (10,1,'2026-03-01','pago'),(11,1,'2026-03-05','pendente'),(12,2,'2026-03-08','pago'),(13,3,'2026-03-10','pago');",
+      "INSERT INTO item_pedido VALUES (10,1,1),(10,2,2),(11,3,1),(12,1,1),(12,4,1),(13,2,3);"
+    ].join("\n");
+
+    function norm(s){return (s||'').trim().toLowerCase().replace(/\s+/g,' ').replace(/;+\s*$/,'');}
+    function rowsKey(res, ordered){
+      if(!res || !res.length) return '';
+      var vals = res[0].values.map(function(r){return r.map(function(c){return c===null?'':String(c);}).join('|');});
+      if(!ordered) vals.sort();
+      return vals.join('\n');
+    }
+    function drawGrid(el, res){
+      if(!res || !res.length){ el.innerHTML='<p style="color:#8a7f72;font-size:.85rem">(nenhuma linha)</p>'; return; }
+      var c=res[0].columns, v=res[0].values;
+      var h='<table><tr>'+c.map(function(x){return '<th>'+x+'</th>';}).join('')+'</tr>';
+      h+=v.map(function(r){return '<tr>'+r.map(function(x){return '<td>'+(x===null?'∅':x)+'</td>';}).join('')+'</tr>';}).join('');
+      el.innerHTML=h+'</table>';
+    }
+    function updatePlacar(){
+      var n = document.querySelectorAll('.q .fb.ok').length;
+      document.getElementById('acertos').textContent = n;
+      document.getElementById('pdet').textContent = n>=11 ? 'tudo certo! 🎉' : (11-n)+' pra fechar';
+    }
+    function fb(q, ok, msg){
+      var d=q.querySelector('.fb'); d.className='fb '+(ok?'ok':'bad'); d.innerHTML=msg;
+      updatePlacar();
+    }
+
+    // múltipla escolha
+    document.querySelectorAll('[data-check-mc]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var q=b.closest('.q'); var sel=q.querySelector('input:checked');
+        if(!sel){ fb(q,false,'Escolha uma alternativa.'); return; }
+        if(sel.value===q.dataset.mc) fb(q,true,'✓ Correto.');
+        else fb(q,false,'✗ Não é essa. Releia a definição da forma normal.');
+      });
+    });
+
+    // DDL por palavra-chave
+    document.querySelectorAll('[data-check-kw]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var q=b.closest('.q'); var t=norm(q.querySelector('textarea').value);
+        var kws=q.dataset.kw.split('|'); var faltam=kws.filter(function(k){return t.indexOf(k.toLowerCase())<0;});
+        if(!faltam.length) fb(q,true,'✓ Tem tudo: '+kws.join(', ')+'.');
+        else fb(q,false,'✗ Está faltando: <b>'+faltam.join('</b>, <b>')+'</b>.');
+      });
+    });
+
+    // consultas
+    document.querySelectorAll('.q.sql [data-run]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var q=b.closest('.q'); var sql=q.querySelector('textarea').value.trim();
+        var grid=q.querySelector('.grid-res'); grid.innerHTML='';
+        if(!db){ fb(q,false,'O banco ainda está carregando — aguarde um instante.'); return; }
+        var isMut = q.classList.contains('mut');
+        try{
+          if(isMut){
+            db.run("SAVEPOINT s");
+            db.run(sql);
+            var chk = db.exec(q.dataset.exp);
+            var got = rowsKey(chk, false);
+            var want = (q.dataset.expectRows||'').split(';').filter(Boolean).sort().join('\n');
+            db.run("ROLLBACK TO s"); db.run("RELEASE s");
+            drawGrid(grid, chk);
+            if(got===want) fb(q,true,'✓ Fez o que era pedido.');
+            else fb(q,false,'✗ O estado da tabela não ficou como esperado. Confira colunas e valores.');
+          } else {
+            var res = db.exec(sql);
+            drawGrid(grid, res);
+            var exp = db.exec(q.dataset.exp);
+            var ordered = q.dataset.ordered==='1';
+            if(rowsKey(res, ordered) === rowsKey(exp, ordered)) fb(q,true,'✓ Resultado correto.');
+            else fb(q,false,'✗ O resultado não bate com o esperado. Verifique colunas, filtro, JOIN e ordenação.');
+          }
+        }catch(e){
+          try{ db.run("ROLLBACK TO s"); db.run("RELEASE s"); }catch(_){}
+          fb(q,false,'✗ Erro de SQL: <code>'+String(e.message||e)+'</code>');
+        }
+      });
+    });
+
+    initSqlJs({ locateFile: function(f){ return 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.14.2/'+f; } })
+      .then(function(SQL){
+        db = new SQL.Database();
+        db.run(SEED);
+        var l=document.getElementById('loading'); if(l) l.remove();
+      })
+      .catch(function(e){
+        var l=document.getElementById('loading'); if(l) l.textContent='falhou ao carregar o banco (precisa de internet).';
+      });
+
+    updatePlacar();
+  })();
+  </script>
+</body>
+</html>
