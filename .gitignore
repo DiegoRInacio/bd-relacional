@@ -27,9 +27,6 @@ gabarito*
 *.rar
 *.zip
 
-# --- Repositório git aninhado (não faz parte deste site) ---
-/Projetos_Banco_de_Dados_Relacional/
-
 # --- Notebooks (exceto se explicitamente adicionados) ---
 *.ipynb
 .ipynb_checkpoints/
