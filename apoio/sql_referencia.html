@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Referência de SQL — Banco de Dados Relacional</title>
+  <link rel="stylesheet" href="../assets/css/apoio.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="inner">
+      <img src="../assets/img/logo_univassouras.png" alt="Universidade de Vassouras">
+      <div class="inst">Universidade de Vassouras<small>Engenharia de Software</small></div>
+      <a class="back" href="../index.html">← Portal</a>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <aside class="toc">
+      <div class="selo">Referência de SQL</div>
+      <a href="#esquema">Esquema de exemplo</a>
+      <a href="#tipos">Tipos de dados</a>
+      <a href="#ddl">DDL — estrutura</a>
+      <a href="#constraints">Constraints</a>
+      <a href="#dml">DML — dados</a>
+      <a href="#dql">DQL — consultas</a>
+      <a href="#join">JOIN</a>
+      <a href="#agregacao">Agregação</a>
+      <a href="#transacao">Transações</a>
+    </aside>
+
+    <main>
+      <div class="titulo">Referência de SQL</div>
+      <p class="lead">Cola de sintaxe do PostgreSQL para consultar durante exercícios e provas.
+      Todos os exemplos usam o esquema abaixo. Copie e adapte.</p>
+
+      <section id="esquema">
+        <h2>Esquema de exemplo</h2>
+        <div class="code"><pre><code>CREATE TABLE cliente (
+    id      SERIAL       PRIMARY KEY,
+    nome    VARCHAR(100) NOT NULL,
+    cidade  VARCHAR(60)
+);
+
+CREATE TABLE produto (
+    id     SERIAL       PRIMARY KEY,
+    nome   VARCHAR(100) NOT NULL,
+    preco  NUMERIC(10,2) NOT NULL CHECK (preco &gt; 0)
+);
+
+CREATE TABLE pedido (
+    id          SERIAL      PRIMARY KEY,
+    id_cliente  INT         NOT NULL REFERENCES cliente(id),
+    data_pedido DATE        NOT NULL DEFAULT CURRENT_DATE,
+    status      VARCHAR(15) NOT NULL DEFAULT 'aberto'
+);
+
+CREATE TABLE item_pedido (
+    id_pedido  INT NOT NULL REFERENCES pedido(id),
+    id_produto INT NOT NULL REFERENCES produto(id),
+    quantidade INT NOT NULL CHECK (quantidade &gt; 0),
+    PRIMARY KEY (id_pedido, id_produto)
+);</code></pre></div>
+      </section>
+
+      <section id="tipos">
+        <h2>Tipos de dados mais usados</h2>
+        <table class="ref">
+          <tr><th>Tipo</th><th>Guarda</th><th>Exemplo</th></tr>
+          <tr><td><code>INTEGER</code> / <code>INT</code></td><td>inteiro</td><td>idade, quantidade</td></tr>
+          <tr><td><code>NUMERIC(p, s)</code></td><td>decimal exato — <code>p</code> dígitos, <code>s</code> após a vírgula</td><td><code>NUMERIC(10,2)</code> → 12345678,90</td></tr>
+          <tr><td><code>VARCHAR(n)</code></td><td>texto até <code>n</code> caracteres</td><td>nome, descrição</td></tr>
+          <tr><td><code>TEXT</code></td><td>texto sem limite</td><td>observações</td></tr>
+          <tr><td><code>CHAR(n)</code></td><td>texto fixo de <code>n</code> (completa com espaços)</td><td>CPF, UF</td></tr>
+          <tr><td><code>BOOLEAN</code></td><td><code>TRUE</code> / <code>FALSE</code></td><td>ativo</td></tr>
+          <tr><td><code>DATE</code></td><td>data</td><td><code>'2026-03-10'</code></td></tr>
+          <tr><td><code>TIMESTAMP</code></td><td>data e hora</td><td><code>CURRENT_TIMESTAMP</code></td></tr>
+          <tr><td><code>SERIAL</code></td><td>inteiro que se auto-incrementa</td><td>chave primária</td></tr>
+        </table>
+      </section>
+
+      <section id="ddl">
+        <h2>DDL — definir a estrutura</h2>
+        <h3>CREATE / DROP</h3>
+        <div class="code"><pre><code>CREATE TABLE nome ( coluna TIPO [constraints], ... );
+DROP TABLE nome;
+DROP TABLE IF EXISTS nome;           -- não dá erro se não existir
+DROP TABLE nome CASCADE;             -- derruba também o que depende dela
+TRUNCATE nome;                       -- esvazia (mais rápido que DELETE)</code></pre></div>
+
+        <h3>ALTER TABLE</h3>
+        <div class="code"><pre><code>ALTER TABLE cliente ADD COLUMN ativo BOOLEAN DEFAULT TRUE;
+ALTER TABLE cliente DROP COLUMN cidade;
+ALTER TABLE cliente RENAME COLUMN nome TO nome_completo;
+ALTER TABLE cliente ALTER COLUMN nome TYPE VARCHAR(150);
+ALTER TABLE produto ADD CONSTRAINT chk_preco CHECK (preco &gt; 0);
+ALTER TABLE item_pedido ADD CONSTRAINT fk_prod
+      FOREIGN KEY (id_produto) REFERENCES produto(id);</code></pre></div>
+      </section>
+
+      <section id="constraints">
+        <h2>Constraints</h2>
+        <table class="ref">
+          <tr><th>Constraint</th><th>Garante</th></tr>
+          <tr><td><code>NOT NULL</code></td><td>a coluna não fica vazia</td></tr>
+          <tr><td><code>DEFAULT valor</code></td><td>valor automático quando não informado</td></tr>
+          <tr><td><code>PRIMARY KEY</code></td><td>identifica a linha: única + não nula (uma por tabela)</td></tr>
+          <tr><td><code>UNIQUE</code></td><td>não repete valor (pode ter várias; aceita NULL)</td></tr>
+          <tr><td><code>CHECK (condição)</code></td><td>o valor obedece a uma regra</td></tr>
+          <tr><td><code>REFERENCES tabela(col)</code></td><td>FOREIGN KEY — o valor existe na outra tabela</td></tr>
+        </table>
+        <div class="code"><pre><code>-- na coluna
+preco NUMERIC(10,2) NOT NULL CHECK (preco &gt; 0)
+
+-- FK com comportamento ao apagar o "pai"
+id_cliente INT REFERENCES cliente(id) ON DELETE RESTRICT   -- bloqueia (padrão)
+id_cliente INT REFERENCES cliente(id) ON DELETE CASCADE    -- apaga os filhos junto
+id_cliente INT REFERENCES cliente(id) ON DELETE SET NULL   -- zera a FK
+
+-- chave composta / constraint de tabela
+PRIMARY KEY (id_pedido, id_produto)
+CONSTRAINT uq_email UNIQUE (email)</code></pre></div>
+      </section>
+
+      <section id="dml">
+        <h2>DML — mexer nos dados</h2>
+        <h3>INSERT</h3>
+        <div class="code"><pre><code>-- sempre liste as colunas
+INSERT INTO cliente (nome, cidade) VALUES ('Ana', 'SP');
+
+-- várias linhas de uma vez
+INSERT INTO produto (nome, preco) VALUES
+  ('Notebook', 3000), ('Mouse', 80), ('Teclado', 150);
+
+-- deixar o SERIAL / DEFAULT agir: só não informe a coluna
+INSERT INTO pedido (id_cliente) VALUES (1);
+
+-- a partir de uma consulta
+INSERT INTO cliente_vip (nome)
+SELECT nome FROM cliente WHERE cidade = 'SP';</code></pre></div>
+
+        <h3>UPDATE</h3>
+        <div class="code"><pre><code>UPDATE cliente SET cidade = 'RJ' WHERE id = 1;
+
+-- sem WHERE muda TODAS as linhas ⚠
+UPDATE pedido SET status = 'fechado' WHERE data_pedido &lt; '2024-01-01';
+
+-- usando outra tabela
+UPDATE produto p SET preco = preco * 1.10
+FROM   reajuste r WHERE r.id_produto = p.id;</code></pre></div>
+
+        <h3>DELETE</h3>
+        <div class="code"><pre><code>DELETE FROM pedido WHERE status = 'cancelado';
+
+-- ordem por causa das FKs: filho antes do pai
+DELETE FROM item_pedido WHERE id_pedido = 5;
+DELETE FROM pedido      WHERE id = 5;
+
+-- sem WHERE apaga a tabela inteira ⚠</code></pre></div>
+      </section>
+
+      <section id="dql">
+        <h2>DQL — consultar</h2>
+        <div class="code"><pre><code>SELECT nome, cidade          -- colunas (ou *)
+FROM   cliente
+WHERE  cidade = 'SP'         -- filtro de linhas
+ORDER BY nome ASC            -- ASC é o padrão; DESC inverte
+LIMIT  10;                   -- só as primeiras N
+
+SELECT DISTINCT cidade FROM cliente;   -- valores sem repetição</code></pre></div>
+
+        <h3>Operadores do WHERE</h3>
+        <table class="ref">
+          <tr><th>Operador</th><th>Exemplo</th></tr>
+          <tr><td><code>=</code> <code>&lt;&gt;</code> <code>&gt;</code> <code>&lt;</code> <code>&gt;=</code> <code>&lt;=</code></td><td><code>preco &gt;= 100</code></td></tr>
+          <tr><td><code>BETWEEN ... AND ...</code></td><td><code>data_pedido BETWEEN '2026-01-01' AND '2026-03-31'</code></td></tr>
+          <tr><td><code>IN (...)</code></td><td><code>status IN ('aberto', 'pago')</code></td></tr>
+          <tr><td><code>LIKE</code> / <code>ILIKE</code></td><td><code>nome LIKE 'A%'</code> (começa com A) · <code>ILIKE</code> ignora maiúsc.</td></tr>
+          <tr><td><code>IS NULL</code> / <code>IS NOT NULL</code></td><td><code>cidade IS NULL</code></td></tr>
+          <tr><td><code>AND</code> / <code>OR</code> / <code>NOT</code></td><td><code>cidade = 'SP' AND status = 'pago'</code></td></tr>
+        </table>
+      </section>
+
+      <section id="join">
+        <h2>JOIN — juntar tabelas</h2>
+        <div class="code"><pre><code>-- INNER JOIN: só as linhas que casam nas duas pontas
+SELECT c.nome, p.id, p.status
+FROM   cliente c
+JOIN   pedido  p ON p.id_cliente = c.id;
+
+-- LEFT JOIN: todos os clientes, mesmo os sem pedido (colunas de pedido = NULL)
+SELECT c.nome, p.id
+FROM   cliente c
+LEFT JOIN pedido p ON p.id_cliente = c.id;
+
+-- vários JOINs encadeados
+SELECT c.nome, pr.nome AS produto, i.quantidade
+FROM   pedido p
+JOIN   cliente     c  ON c.id = p.id_cliente
+JOIN   item_pedido i  ON i.id_pedido = p.id
+JOIN   produto     pr ON pr.id = i.id_produto;</code></pre></div>
+        <div class="nota"><b>Apelidos (alias):</b> <code>cliente c</code> deixa escrever <code>c.nome</code>.
+        Em JOIN, sempre qualifique a coluna (<code>c.id</code>, <code>p.id</code>) para evitar ambiguidade.</div>
+      </section>
+
+      <section id="agregacao">
+        <h2>Agregação</h2>
+        <table class="ref">
+          <tr><th>Função</th><th>Faz</th></tr>
+          <tr><td><code>COUNT(*)</code></td><td>conta linhas · <code>COUNT(col)</code> ignora NULL</td></tr>
+          <tr><td><code>SUM(col)</code></td><td>soma</td></tr>
+          <tr><td><code>AVG(col)</code></td><td>média</td></tr>
+          <tr><td><code>MIN(col)</code> / <code>MAX(col)</code></td><td>menor / maior</td></tr>
+        </table>
+        <div class="code"><pre><code>-- resumo geral
+SELECT COUNT(*), AVG(preco) FROM produto;
+
+-- resumo por categoria: GROUP BY
+SELECT p.status,
+       COUNT(*)                       AS qtd,
+       SUM(i.quantidade * pr.preco)   AS total
+FROM   pedido p
+JOIN   item_pedido i ON i.id_pedido = p.id
+JOIN   produto     pr ON pr.id = i.id_produto
+GROUP BY p.status
+HAVING SUM(i.quantidade * pr.preco) &gt; 1000   -- filtra DEPOIS de agrupar
+ORDER BY total DESC;</code></pre></div>
+        <div class="nota"><b>Regra:</b> toda coluna do <code>SELECT</code> que não é agregação
+        precisa estar no <code>GROUP BY</code>. &nbsp; <b><code>WHERE</code></b> filtra antes de agrupar,
+        <b><code>HAVING</code></b> filtra os grupos.</div>
+      </section>
+
+      <section id="transacao">
+        <h2>Transações</h2>
+        <div class="code"><pre><code>BEGIN;
+  UPDATE conta SET saldo = saldo - 100 WHERE id = 1;
+  UPDATE conta SET saldo = saldo + 100 WHERE id = 2;
+COMMIT;        -- confirma tudo
+-- ou:
+ROLLBACK;      -- desfaz tudo</code></pre></div>
+        <div class="nota">Ótimo para testar um <code>UPDATE</code>/<code>DELETE</code> arriscado:
+        roda dentro de <code>BEGIN</code>, confere com um <code>SELECT</code>, e só então
+        <code>COMMIT</code> (ou <code>ROLLBACK</code> para cancelar).</div>
+      </section>
+
+    </main>
+
+    <div class="rodape">Banco de Dados Relacional · Prof. Me. Diego Ramos Inácio — Universidade de Vassouras</div>
+  </div>
+
+  <script src="../assets/js/apoio.js"></script>
+</body>
+</html>
