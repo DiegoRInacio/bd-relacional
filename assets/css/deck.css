@@ -36,6 +36,10 @@ body{
 }
 .slide.active{display:flex;flex-direction:column;justify-content:safe center;animation:slideIn .45s ease-out}
 @keyframes slideIn{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){
+  .slide.active{animation:none}
+  .deck-prog,.deck-nav button{transition:none}
+}
 
 /* capa */
 .slide.cover{text-align:center}

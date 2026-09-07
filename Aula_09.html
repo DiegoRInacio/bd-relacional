@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 09 — Views</title>
+  <link rel="stylesheet" href="assets/css/deck.css">
+</head>
+<body>
+
+  <div class="deck-top">
+    <span class="t">Banco de Dados Relacional · Aula 09</span>
+    <a href="index.html">← Portal</a>
+  </div>
+  <div class="deck-prog"></div>
+
+  <div class="deck">
+
+    <!-- 1 · CAPA -->
+    <section class="slide cover active">
+      <img class="crest" src="assets/img/logo_univassouras.png" alt="Universidade de Vassouras">
+      <h1>Views</h1>
+      <div class="meta">
+        Banco de Dados Relacional · Aula 09<br>
+        Curso de Engenharia de Software — Universidade de Vassouras<br>
+        Prof. Diego Ramos Inácio
+      </div>
+    </section>
+
+    <!-- 2 · O QUE É -->
+    <section class="slide">
+      <span class="tag">Conceito</span>
+      <h2>O que é uma view</h2>
+      <p>Uma <b>consulta salva com um nome</b>. Você usa a view como se fosse uma tabela,
+      mas ela <b>não guarda dados</b> — a cada consulta, o <code>SELECT</code> por trás roda de novo.</p>
+      <div class="fig">
+        <svg viewBox="0 0 900 220" role="img" aria-label="A view é um SELECT nomeado que lê das tabelas base">
+          <defs><marker id="a9m2" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+          <rect class="box-soft" x="30" y="80" width="180" height="60" rx="10"/>
+          <text x="120" y="108" text-anchor="middle" font-size="14">SELECT * FROM</text>
+          <text x="120" y="128" text-anchor="middle" font-size="14" class="hl">minha_view</text>
+          <line class="ln" x1="212" y1="110" x2="290" y2="110" marker-end="url(#a9m2)"/>
+
+          <rect class="box" x="295" y="70" width="240" height="80" rx="10"/>
+          <text x="415" y="102" text-anchor="middle" font-size="16" class="hl">VIEW</text>
+          <text x="415" y="126" text-anchor="middle" font-size="12" class="cap">= um SELECT guardado</text>
+
+          <line class="ln" x1="537" y1="95" x2="620" y2="70" marker-end="url(#a9m2)"/>
+          <line class="ln" x1="537" y1="125" x2="620" y2="150" marker-end="url(#a9m2)"/>
+          <g text-anchor="middle" font-size="13">
+            <rect class="box-soft" x="625" y="45" width="150" height="46" rx="8"/><text x="700" y="73">tabela cliente</text>
+            <rect class="box-soft" x="625" y="130" width="150" height="46" rx="8"/><text x="700" y="158">tabela pedido</text>
+          </g>
+        </svg>
+      </div>
+      <div class="callout">A view é uma <b>tabela virtual</b>: aparência de tabela, conteúdo de consulta.</div>
+    </section>
+
+    <!-- 3 · PARA QUE SERVE -->
+    <section class="slide">
+      <span class="tag">Motivação</span>
+      <h2>Para que servem</h2>
+      <div class="cols">
+        <div class="box"><b>Simplificar</b><br>esconde um <code>JOIN</code> grande atrás de um nome curto</div>
+        <div class="box"><b>Segurança</b><br>expõe só as colunas/linhas que o usuário pode ver</div>
+        <div class="box"><b>Manutenção</b><br>a lógica fica <b>num lugar só</b> — mudou a regra, mudou a view</div>
+        <div class="box"><b>Padronização</b><br>todo mundo consulta o "faturamento" da mesma forma</div>
+      </div>
+    </section>
+
+    <!-- 4 · CRIAR -->
+    <section class="slide">
+      <span class="tag">Sintaxe</span>
+      <h2>Criar e consultar</h2>
+      <pre><code>-- criar
+CREATE VIEW pedidos_pagos AS
+SELECT c.nome, p.id, p.valor
+FROM   cliente c
+JOIN   pedido  p ON p.id_cliente = c.id
+WHERE  p.status = 'pago';
+
+-- usar: como qualquer tabela
+SELECT * FROM pedidos_pagos WHERE valor &gt; 200;
+
+-- trocar a lógica sem recriar
+CREATE OR REPLACE VIEW pedidos_pagos AS SELECT ... ;</code></pre>
+    </section>
+
+    <!-- 5 · EXEMPLO SIMPLIFICAR -->
+    <section class="slide">
+      <span class="tag">Exemplo · simplificar</span>
+      <h2>Um nome no lugar do JOIN</h2>
+      <div class="split">
+        <div>
+          <p><b>Sem view</b> — todo relatório repete o JOIN:</p>
+          <pre><code>SELECT c.nome, p.valor
+FROM cliente c JOIN pedido p
+  ON p.id_cliente = c.id
+WHERE p.status = 'pago' AND c.cidade = 'SP';</code></pre>
+          <p><b>Com a view</b> <code>pedidos_pagos</code>:</p>
+          <pre><code>SELECT * FROM pedidos_pagos
+WHERE cidade = 'SP';</code></pre>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 360 260" role="img" aria-label="Consulta longa vira consulta curta com a view">
+            <defs><marker id="a9m5" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+            <rect x="20" y="30" width="320" height="70" rx="8" fill="rgba(0,0,0,.28)" stroke="rgba(255,255,255,.3)"/>
+            <text x="180" y="60" text-anchor="middle" font-size="12" fill="#e6d3a8">SELECT ... JOIN ... ON ... WHERE ...</text>
+            <text x="180" y="82" text-anchor="middle" font-size="11" class="cap">repetido em cada consulta</text>
+            <line class="ln" x1="180" y1="105" x2="180" y2="140" marker-end="url(#a9m5)"/>
+            <text x="220" y="128" font-size="11" class="hl">vira view</text>
+            <rect x="60" y="145" width="240" height="55" rx="8" fill="rgba(0,0,0,.28)" stroke="#d4a94e"/>
+            <text x="180" y="178" text-anchor="middle" font-size="13" class="hl">SELECT * FROM pedidos_pagos</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 · EXEMPLO AGREGAÇÃO -->
+    <section class="slide">
+      <span class="tag">Exemplo · agregação</span>
+      <h2>View de resumo</h2>
+      <div class="split">
+        <div>
+          <pre><code>CREATE VIEW total_por_cliente AS
+SELECT c.nome,
+       COUNT(p.id)              AS pedidos,
+       COALESCE(SUM(p.valor),0) AS total
+FROM   cliente c
+LEFT JOIN pedido p ON p.id_cliente = c.id
+GROUP BY c.nome;</code></pre>
+          <pre><code>SELECT * FROM total_por_cliente
+ORDER BY total DESC;</code></pre>
+        </div>
+        <div>
+          <table>
+            <tr><th>nome</th><th>pedidos</th><th>total</th></tr>
+            <tr><td>Beto</td><td>1</td><td>500</td></tr>
+            <tr><td>Ana</td><td>2</td><td>450</td></tr>
+            <tr><td>Carla</td><td>1</td><td>200</td></tr>
+            <tr><td>Davi</td><td>0</td><td>0</td></tr>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 · TEMPO REAL -->
+    <section class="slide">
+      <span class="tag">Comportamento</span>
+      <h2>A view sempre reflete a tabela</h2>
+      <div class="fig">
+        <svg viewBox="0 0 900 240" role="img" aria-label="Um INSERT na tabela pedido aparece na hora na view, sem precisar atualizar">
+          <defs><marker id="a9m7" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+          <rect class="box-soft" x="30" y="95" width="220" height="50" rx="8"/>
+          <text x="140" y="125" text-anchor="middle" font-size="13">INSERT INTO pedido (...)</text>
+          <line class="ln" x1="252" y1="120" x2="330" y2="120" marker-end="url(#a9m7)"/>
+          <rect class="box" x="335" y="90" width="180" height="60" rx="10"/>
+          <text x="425" y="118" text-anchor="middle" font-size="14" class="hl">tabela pedido</text>
+          <text x="425" y="138" text-anchor="middle" font-size="11" class="cap">+1 linha</text>
+          <line class="ln" x1="517" y1="120" x2="595" y2="120" marker-end="url(#a9m7)"/>
+          <rect class="box-soft" x="600" y="90" width="270" height="60" rx="10"/>
+          <text x="735" y="118" text-anchor="middle" font-size="14">SELECT * FROM total_por_cliente</text>
+          <text x="735" y="138" text-anchor="middle" font-size="11" class="cap">já mostra o novo total</text>
+        </svg>
+      </div>
+      <div class="callout">Não existe "atualizar a view" — ela roda o <code>SELECT</code> toda vez.
+      (A exceção é a <b>view materializada</b>, no próximo slide.)</div>
+    </section>
+
+    <!-- 8 · SEGURANÇA -->
+    <section class="slide">
+      <span class="tag">Uso · segurança</span>
+      <h2>Mostrar só uma parte</h2>
+      <div class="split">
+        <div>
+          <pre><code>CREATE VIEW cliente_publico AS
+SELECT id, nome, cidade      -- some cpf, telefone, email
+FROM   cliente;
+
+-- o usuário recebe acesso à VIEW, não à tabela
+GRANT SELECT ON cliente_publico TO atendente;
+REVOKE ALL   ON cliente        FROM atendente;</code></pre>
+          <p>Também dá para filtrar linhas: <code>WHERE ativo = TRUE</code>.</p>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 360 280" role="img" aria-label="A view expõe id, nome, cidade e esconde cpf e email da tabela cliente">
+            <defs><marker id="a9m8" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+            <g font-size="12" text-anchor="middle">
+              <text x="90" y="24" class="cap">cliente</text>
+              <rect class="cell" x="30" y="32" width="120" height="26"/><text x="90" y="50">id</text>
+              <rect class="cell" x="30" y="58" width="120" height="26"/><text x="90" y="76">nome</text>
+              <rect class="cell" x="30" y="84" width="120" height="26"/><text x="90" y="102">cidade</text>
+              <rect x="30" y="110" width="120" height="26" fill="none" stroke="#e06a54" stroke-width="2"/><text x="90" y="128" fill="#e06a54">cpf</text>
+              <rect x="30" y="136" width="120" height="26" fill="none" stroke="#e06a54" stroke-width="2"/><text x="90" y="154" fill="#e06a54">email</text>
+            </g>
+            <line class="ln" x1="155" y1="70" x2="215" y2="70" marker-end="url(#a9m8)"/>
+            <g font-size="12" text-anchor="middle">
+              <text x="280" y="24" class="cap">cliente_publico</text>
+              <rect class="cell" x="220" y="32" width="120" height="26"/><text x="280" y="50" class="hl">id</text>
+              <rect class="cell" x="220" y="58" width="120" height="26"/><text x="280" y="76" class="hl">nome</text>
+              <rect class="cell" x="220" y="84" width="120" height="26"/><text x="280" y="102" class="hl">cidade</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9 · MATERIALIZADA -->
+    <section class="slide">
+      <span class="tag">View materializada</span>
+      <h2>View × view materializada</h2>
+      <table>
+        <tr><th></th><th><code>CREATE VIEW</code></th><th><code>CREATE MATERIALIZED VIEW</code></th></tr>
+        <tr><td>guarda dados?</td><td>não — só o <code>SELECT</code></td><td><b>sim</b> — o resultado fica no disco</td></tr>
+        <tr><td>está sempre atual?</td><td>sim</td><td>não — só até o próximo <code>REFRESH</code></td></tr>
+        <tr><td>consulta é</td><td>tão rápida quanto o <code>SELECT</code></td><td><b>muito rápida</b> (só lê o resultado pronto)</td></tr>
+        <tr><td>atualizar</td><td>—</td><td><code>REFRESH MATERIALIZED VIEW nome;</code></td></tr>
+      </table>
+    </section>
+
+    <!-- 10 · QUANDO MATERIALIZAR -->
+    <section class="slide">
+      <span class="tag">View materializada</span>
+      <h2>Quando materializar</h2>
+      <div class="split">
+        <div>
+          <p>Vale a pena quando o <code>SELECT</code> é <b>pesado</b> (agrega milhões de linhas),
+          é <b>consultado o tempo todo</b>, e os dados podem estar <b>alguns minutos atrasados</b>
+          sem problema — um <em>dashboard</em>, um relatório mensal.</p>
+          <pre><code>REFRESH MATERIALIZED VIEW CONCURRENTLY
+       faturamento_mensal;   -- não trava as consultas</code></pre>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 360 240" role="img" aria-label="A view materializada só muda no REFRESH">
+            <defs><marker id="a9m10" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+            <rect class="box-soft" x="20" y="40" width="120" height="46" rx="8"/><text x="80" y="68" text-anchor="middle" font-size="12">tabelas mudam</text>
+            <line class="ln" x1="80" y1="86" x2="80" y2="130" marker-end="url(#a9m10)"/>
+            <text x="150" y="112" font-size="11" class="warn">a matview NÃO muda</text>
+            <rect class="box" x="20" y="130" width="200" height="46" rx="8"/><text x="120" y="158" text-anchor="middle" font-size="12" class="hl">matview (resultado antigo)</text>
+            <line class="ln" x1="230" y1="153" x2="290" y2="153" marker-end="url(#a9m10)"/>
+            <text x="320" y="140" text-anchor="middle" font-size="11" class="hl">REFRESH</text>
+            <text x="320" y="165" text-anchor="middle" font-size="11" class="cap">= recalcula</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11 · LIMITAÇÕES DML -->
+    <section class="slide">
+      <span class="tag">Limitações</span>
+      <h2>Dá para gravar por uma view?</h2>
+      <div class="cols">
+        <div class="box">
+          <b>View simples → sim</b><br>
+          uma view de <b>uma tabela</b>, sem <code>JOIN</code>/<code>GROUP BY</code>/<code>DISTINCT</code>,
+          aceita <code>INSERT</code>/<code>UPDATE</code>/<code>DELETE</code> — o banco repassa pra tabela base.
+        </div>
+        <div class="box">
+          <b>View complexa → não direto</b><br>
+          com <code>JOIN</code> ou agregação, o banco não sabe onde gravar.
+          Solução: um <b>trigger <code>INSTEAD OF</code></b> (Aula 08) que faz o <code>INSERT</code> na tabela certa.
+        </div>
+      </div>
+      <div class="callout">Na dúvida, trate a view como <b>só leitura</b>.</div>
+    </section>
+
+    <!-- 12 · PRÓS E CONTRAS -->
+    <section class="slide">
+      <span class="tag">Resumo</span>
+      <h2>Prós e contras</h2>
+      <table>
+        <tr><th>A favor</th><th>Contra</th></tr>
+        <tr><td>consulta complexa vira nome simples</td><td>view sobre view sobre view fica difícil de entender</td></tr>
+        <tr><td>controle de acesso por coluna/linha</td><td>gravação limitada (precisa de <code>INSTEAD OF</code>)</td></tr>
+        <tr><td>lógica de negócio num lugar só</td><td>view comum não acelera nada (o <code>SELECT</code> roda igual)</td></tr>
+        <tr><td>view materializada acelera relatório pesado</td><td>view materializada fica desatualizada até o <code>REFRESH</code></td></tr>
+      </table>
+    </section>
+
+    <!-- 13 · PENSE -->
+    <section class="slide">
+      <span class="tag">Pergunta pra pensar</span>
+      <h2>Antes da próxima aula</h2>
+      <div class="split">
+        <div>
+          <p>Com <code>produto(id, nome, categoria, preco)</code> e
+          <code>venda(id, id_produto, quantidade)</code>, escreva:</p>
+          <ol>
+            <li>uma view <code>vendas_por_categoria</code> com <b>categoria</b> e a
+            <b>quantidade total</b> vendida (<code>SUM</code>);</li>
+            <li>uma view <code>produto_publico</code> que mostra tudo de <code>produto</code>
+            <b>menos o preço</b>;</li>
+            <li>quando você faria a primeira como <b>materializada</b>?</li>
+          </ol>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 400 200" role="img" aria-label="produto e venda ligados por id_produto">
+            <rect class="box-soft" x="10" y="65" width="230" height="66" rx="8"/>
+            <text x="125" y="92" text-anchor="middle" font-size="14" class="hl">produto</text>
+            <text x="125" y="114" text-anchor="middle" font-size="11" class="cap">id · nome · categoria · preco</text>
+            <line class="ln-soft" x1="240" y1="98" x2="270" y2="98"/>
+            <rect class="box-soft" x="270" y="65" width="120" height="66" rx="8"/>
+            <text x="330" y="92" text-anchor="middle" font-size="14" class="hl">venda</text>
+            <text x="330" y="114" text-anchor="middle" font-size="11" class="cap">id · id_produto · qtd</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 14 · FECHAMENTO -->
+    <section class="slide cover">
+      <img class="crest" src="assets/img/logo_univassouras.png" alt="Universidade de Vassouras">
+      <h1>Dúvidas?</h1>
+      <div class="meta">
+        Prof. Diego Ramos Inácio<br>
+        diego.inacio@univassouras.edu.br<br>
+        Curso de Engenharia de Software — Universidade de Vassouras
+      </div>
+    </section>
+
+  </div>
+
+  <div class="deck-count">1 / 14</div>
+  <div class="deck-nav">
+    <button data-prev aria-label="Slide anterior">‹</button>
+    <button data-next aria-label="Próximo slide">›</button>
+  </div>
+
+  <script src="assets/js/deck.js"></script>
+</body>
+</html>
