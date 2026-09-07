@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 11 — API RESTful vs. SQL Direto</title>
+  <link rel="stylesheet" href="assets/css/deck.css">
+</head>
+<body>
+
+  <div class="deck-top">
+    <span class="t">Banco de Dados Relacional · Aula 11</span>
+    <a href="index.html">← Portal</a>
+  </div>
+  <div class="deck-prog"></div>
+
+  <div class="deck">
+
+    <!-- 1 · CAPA -->
+    <section class="slide cover active">
+      <img class="crest" src="assets/img/logo_univassouras.png" alt="Universidade de Vassouras">
+      <h1>API RESTful vs. SQL Direto</h1>
+      <div class="meta">
+        Banco de Dados Relacional · Aula 11<br>
+        Curso de Engenharia de Software — Universidade de Vassouras<br>
+        Prof. Diego Ramos Inácio
+      </div>
+    </section>
+
+    <!-- 2 · DUAS FORMAS -->
+    <section class="slide">
+      <span class="tag">Visão geral</span>
+      <h2>Duas formas de chegar aos dados</h2>
+      <p>Ou a aplicação <b>fala direto</b> com o PostgreSQL, ou passa por uma <b>API</b> que
+      fica no meio do caminho.</p>
+      <div class="fig">
+        <svg viewBox="0 0 900 340" role="img" aria-label="SQL direto: app fala com o banco. Via API REST: vários consumidores falam com a API, e só a API fala com o banco.">
+          <defs><marker id="a11m2" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+
+          <!-- SQL direto -->
+          <text x="120" y="34" font-size="15" class="hl">SQL direto</text>
+          <g text-anchor="middle" font-size="13">
+            <rect class="box-soft" x="60" y="70" width="150" height="52" rx="8"/><text x="135" y="101">aplicação</text>
+            <text x="330" y="82" font-size="12" class="cap">SQL + senha do banco</text>
+            <line class="ln" x1="212" y1="96" x2="410" y2="96" marker-end="url(#a11m2)"/>
+            <rect class="box" x="415" y="70" width="160" height="52" rx="8"/><text x="495" y="101" class="hl">PostgreSQL</text>
+          </g>
+
+          <!-- via API REST -->
+          <text x="120" y="184" font-size="15" class="hl">via API REST</text>
+          <g text-anchor="middle" font-size="13">
+            <rect class="box-soft" x="40" y="200" width="170" height="44" rx="8"/><text x="125" y="227">web / app</text>
+            <rect class="box-soft" x="40" y="266" width="170" height="44" rx="8"/><text x="125" y="293" font-size="12">mobile · parceiro · BI</text>
+
+            <line class="ln" x1="212" y1="224" x2="330" y2="246" marker-end="url(#a11m2)"/>
+            <line class="ln" x1="212" y1="286" x2="330" y2="264" marker-end="url(#a11m2)"/>
+            <text x="270" y="200" font-size="11" class="cap">HTTP + JSON</text>
+
+            <rect class="box" x="335" y="228" width="140" height="56" rx="8"/><text x="405" y="261" class="hl">API</text>
+
+            <line class="ln" x1="477" y1="256" x2="575" y2="256" marker-end="url(#a11m2)"/>
+            <text x="526" y="245" font-size="11" class="cap">SQL</text>
+            <rect class="box" x="580" y="228" width="160" height="56" rx="8"/><text x="660" y="261" class="hl">PostgreSQL</text>
+          </g>
+        </svg>
+      </div>
+      <div class="callout">A API é uma <b>camada no meio</b>: só ela toca o banco, e centraliza regras e segurança.</div>
+    </section>
+
+    <!-- 3 · O QUE É REST -->
+    <section class="slide">
+      <span class="tag">Conceito</span>
+      <h2>O que é uma API REST</h2>
+      <p>Uma interface pela <b>web (HTTP)</b> onde cada "coisa" do sistema é um <b>recurso</b>
+      com uma URL, e você opera nele com os <b>métodos HTTP</b>.</p>
+      <div class="cols">
+        <div class="box"><b>Coleção</b><br><code>GET /clientes</code> → lista todos</div>
+        <div class="box"><b>Item</b><br><code>GET /clientes/7</code> → um cliente</div>
+        <div class="box"><b>Criar</b><br><code>POST /clientes</code> + JSON no corpo</div>
+        <div class="box"><b>Resposta</b><br><b>JSON</b> + um <b>código</b> (200, 201, 404...)</div>
+      </div>
+    </section>
+
+    <!-- 4 · MÉTODOS -->
+    <section class="slide">
+      <span class="tag">Mapa mental</span>
+      <h2>HTTP ↔ CRUD ↔ SQL</h2>
+      <table>
+        <tr><th>Método HTTP</th><th>Ação (CRUD)</th><th>No banco</th><th>Sucesso</th></tr>
+        <tr><td><code>GET</code></td><td>ler</td><td><code>SELECT</code></td><td>200</td></tr>
+        <tr><td><code>POST</code></td><td>criar</td><td><code>INSERT</code></td><td>201</td></tr>
+        <tr><td><code>PUT</code> / <code>PATCH</code></td><td>alterar</td><td><code>UPDATE</code></td><td>200</td></tr>
+        <tr><td><code>DELETE</code></td><td>remover</td><td><code>DELETE</code></td><td>204</td></tr>
+      </table>
+      <div class="callout">Erros comuns: <b>400</b> dado inválido · <b>401</b> não autenticado ·
+      <b>403</b> sem permissão · <b>404</b> não existe.</div>
+    </section>
+
+    <!-- 5 · SQL DIRETO -->
+    <section class="slide">
+      <span class="tag">SQL direto</span>
+      <h2>Falar direto com o banco</h2>
+      <div class="split">
+        <div>
+          <pre><code>import psycopg2
+
+conn = psycopg2.connect(
+    dbname="loja", host="localhost",
+    user="ana", password="S3nh@")
+
+cur = conn.cursor()
+cur.execute("SELECT nome, cidade FROM cliente")
+for nome, cidade in cur.fetchall():
+    print(nome, cidade)
+
+conn.close()</code></pre>
+        </div>
+        <div>
+          <p>Simples e poderoso, mas:</p>
+          <ul>
+            <li>cada cliente precisa da <b>senha do banco</b>;</li>
+            <li>a regra de negócio fica <b>espalhada</b> em cada app;</li>
+            <li>o banco fica <b>exposto</b> na rede.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 · COMPARATIVO -->
+    <section class="slide">
+      <span class="tag">Comparativo</span>
+      <h2>Um × outro</h2>
+      <table>
+        <tr><th></th><th>SQL direto</th><th>API REST</th></tr>
+        <tr><td>quem consome</td><td>scripts, ETL, o DBA</td><td>web, mobile, parceiros</td></tr>
+        <tr><td>acoplamento</td><td>alto (conhece as tabelas)</td><td>baixo (conhece só a URL)</td></tr>
+        <tr><td>segurança</td><td>credencial do banco em cada app</td><td>centralizada na API</td></tr>
+        <tr><td>regra de negócio</td><td>repetida em cada app</td><td>num lugar só</td></tr>
+        <tr><td>performance bruta</td><td>máxima</td><td>tem o "pulo" HTTP no meio</td></tr>
+      </table>
+    </section>
+
+    <!-- 7 · FASTAPI -->
+    <section class="slide">
+      <span class="tag">Ferramenta</span>
+      <h2>FastAPI + Swagger</h2>
+      <div class="split">
+        <div>
+          <p><b>FastAPI</b> é um framework Python para construir APIs. De brinde, ele gera a
+          <b>documentação interativa</b> (Swagger UI) em <code>/docs</code> — dá para
+          <b>testar cada endpoint pelo navegador</b>.</p>
+          <pre><code>pip install fastapi uvicorn psycopg2-binary
+uvicorn main:app --reload
+# → http://localhost:8000/docs</code></pre>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 360 240" role="img" aria-label="FastAPI gera automaticamente a interface Swagger em /docs">
+            <defs><marker id="a11m7" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+            <rect class="box" x="30" y="40" width="130" height="46" rx="8"/>
+            <text x="95" y="60" text-anchor="middle" font-size="13" class="hl">main.py</text>
+            <text x="95" y="78" text-anchor="middle" font-size="10" class="cap">@app.get(...)</text>
+            <line class="ln" x1="162" y1="63" x2="220" y2="63" marker-end="url(#a11m7)"/>
+            <rect class="box-soft" x="222" y="40" width="120" height="46" rx="8"/>
+            <text x="282" y="67" text-anchor="middle" font-size="12">/docs (Swagger)</text>
+            <text x="190" y="140" text-anchor="middle" font-size="11" class="cap">a doc nasce do próprio código</text>
+          </svg>
+        </div>
+      </div>
+      <div class="callout"><b>O que é o Swagger?</b> Um padrão (hoje chamado <b>OpenAPI</b>) para
+      <b>descrever</b> uma API — quais endpoints existem, o que cada um recebe e devolve. Dessa
+      descrição, o <b>Swagger UI</b> monta uma página onde você lê a documentação e
+      <b>executa as chamadas</b> pelo navegador. O FastAPI gera essa descrição sozinho a partir
+      das suas funções e modelos Python.</div>
+    </section>
+
+    <!-- 8 · GET -->
+    <section class="slide">
+      <span class="tag">Endpoint de leitura</span>
+      <h2>GET /clientes</h2>
+      <pre><code>from fastapi import FastAPI, Depends
+import psycopg2
+
+app = FastAPI(title="API Loja")
+
+@app.get("/clientes")
+def listar_clientes(conn = Depends(get_conn)):
+    with conn.cursor() as cur:
+        cur.execute("SELECT id, nome, cidade FROM cliente ORDER BY nome")
+        cols = [c.name for c in cur.description]
+        return [dict(zip(cols, row)) for row in cur.fetchall()]
+# resposta: [{"id":1,"nome":"Ana","cidade":"SP"}, ...]  + código 200</code></pre>
+    </section>
+
+    <!-- 9 · POST -->
+    <section class="slide">
+      <span class="tag">Endpoint de escrita</span>
+      <h2>POST /clientes</h2>
+      <pre><code>from pydantic import BaseModel
+
+class ClienteIn(BaseModel):        # valida o JSON de entrada
+    nome: str
+    cidade: str
+
+@app.post("/clientes", status_code=201)
+def criar_cliente(c: ClienteIn, conn = Depends(get_conn)):
+    with conn.cursor() as cur:
+        cur.execute("INSERT INTO cliente (nome, cidade) VALUES (%s, %s) RETURNING id",
+                    (c.nome, c.cidade))
+        novo_id = cur.fetchone()[0]
+    conn.commit()
+    return {"id": novo_id, **c.model_dump()}</code></pre>
+      <div class="callout"><code>%s</code> + tupla = <b>parâmetro</b>, não concatenação — é o que evita SQL injection.</div>
+    </section>
+
+    <!-- 10 · SWAGGER -->
+    <section class="slide">
+      <span class="tag">Swagger UI</span>
+      <h2>Testando pelo navegador</h2>
+      <p>Em <code>localhost:8000/docs</code> o FastAPI mostra cada endpoint, deixa
+      <b>preencher os parâmetros</b> e ver a resposta — sem escrever nenhum código de cliente.</p>
+      <div class="fig">
+        <svg viewBox="0 0 900 320" role="img" aria-label="Tela do Swagger UI com o botão Authorize e os endpoints GET e POST /clientes">
+          <style>.sw text{fill:#3b4151}</style>
+          <g class="sw" font-family="'Segoe UI',sans-serif">
+            <rect x="40" y="20" width="820" height="280" rx="10" fill="#fbf7f0" stroke="#d4a94e" stroke-width="1.6"/>
+            <text x="70" y="55" font-size="18" style="fill:#7a1f1f" font-weight="700">API Loja</text>
+            <rect x="700" y="36" width="130" height="30" rx="5" fill="#fff" stroke="#4a8a4a" stroke-width="1.6"/>
+            <text x="765" y="56" text-anchor="middle" font-size="13" style="fill:#3a7a3a">🔒 Authorize</text>
+
+            <rect x="70" y="90" width="760" height="46" rx="5" fill="#e9f2fb" stroke="#61affe" stroke-width="1.4"/>
+            <rect x="82" y="100" width="62" height="26" rx="4" fill="#61affe"/>
+            <text x="113" y="118" text-anchor="middle" font-size="13" style="fill:#fff" font-weight="700">GET</text>
+            <text x="158" y="118" font-family="Consolas,monospace" font-size="14">/clientes — lista os clientes</text>
+            <text x="800" y="118" text-anchor="end" font-size="12" style="fill:#5a6570">Try it out ▸</text>
+
+            <rect x="70" y="150" width="760" height="46" rx="5" fill="#e7f8ef" stroke="#49cc90" stroke-width="1.4"/>
+            <rect x="82" y="160" width="62" height="26" rx="4" fill="#49cc90"/>
+            <text x="113" y="178" text-anchor="middle" font-size="13" style="fill:#fff" font-weight="700">POST</text>
+            <text x="158" y="178" font-family="Consolas,monospace" font-size="14">/clientes — cria um cliente</text>
+            <text x="800" y="178" text-anchor="end" font-size="12" style="fill:#5a6570">Try it out ▸</text>
+
+            <rect x="70" y="210" width="760" height="46" rx="5" fill="#fdecec" stroke="#f93e3e" stroke-width="1.4"/>
+            <rect x="82" y="220" width="72" height="26" rx="4" fill="#f93e3e"/>
+            <text x="118" y="238" text-anchor="middle" font-size="12" style="fill:#fff" font-weight="700">DELETE</text>
+            <text x="168" y="238" font-family="Consolas,monospace" font-size="14">/clientes/{id} — remove um cliente</text>
+
+            <text x="450" y="285" text-anchor="middle" font-size="12" style="fill:#8a7f72">cada endpoint mostra o schema, o exemplo e a resposta</text>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <!-- 11 · AUTENTICAÇÃO -->
+    <section class="slide">
+      <span class="tag">Usuário e senha</span>
+      <h2>A API pede credencial</h2>
+      <div class="split">
+        <div>
+          <pre><code>from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi import HTTPException
+
+security = HTTPBasic()
+
+def get_conn(cred: HTTPBasicCredentials = Depends(security)):
+    try:
+        conn = psycopg2.connect(
+            dbname="loja", host="localhost",
+            user=cred.username, password=cred.password)
+    except psycopg2.OperationalError:
+        raise HTTPException(401, "usuário ou senha inválidos")
+    try:
+        yield conn
+    finally:
+        conn.close()</code></pre>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 360 240" role="img" aria-label="Sem credencial, a API responde 401; com credencial válida, acessa">
+            <defs><marker id="a11m11" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+            <rect class="box-soft" x="110" y="20" width="140" height="40" rx="8"/>
+            <text x="180" y="45" text-anchor="middle" font-size="12">GET /clientes</text>
+            <line class="ln" x1="150" y1="60" x2="110" y2="100" marker-end="url(#a11m11)"/>
+            <line class="ln" x1="210" y1="60" x2="250" y2="100" marker-end="url(#a11m11)"/>
+            <rect x="20" y="100" width="150" height="40" fill="none" stroke="#e06a54" stroke-width="2"/>
+            <text x="95" y="125" text-anchor="middle" font-size="11" fill="#e06a54">sem senha → 401</text>
+            <rect x="195" y="100" width="150" height="40" fill="none" stroke="#9ed0a0" stroke-width="2"/>
+            <text x="270" y="125" text-anchor="middle" font-size="11" fill="#9ed0a0">senha ok → 200</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 · CASANDO COM AULA 10 -->
+    <section class="slide">
+      <span class="tag">Juntando com a Aula 10</span>
+      <h2>A API conecta COMO o usuário</h2>
+      <div class="fig">
+        <svg viewBox="0 0 900 260" role="img" aria-label="A API repassa usuário e senha ao PostgreSQL, que aplica as permissões da role">
+          <defs><marker id="a11m12" markerWidth="11" markerHeight="11" refX="8" refY="3.2" orient="auto"><path d="M0,0 L10,3.2 L0,6.4 Z" fill="#d4a94e"/></marker></defs>
+          <g text-anchor="middle">
+            <rect class="box-soft" x="30" y="95" width="150" height="60" rx="10"/>
+            <text x="105" y="122" font-size="13">auditor_cli</text>
+            <text x="105" y="142" font-size="11" class="cap">user + senha no Swagger</text>
+            <line class="ln" x1="182" y1="125" x2="270" y2="125" marker-end="url(#a11m12)"/>
+
+            <rect class="box" x="275" y="95" width="170" height="60" rx="10"/>
+            <text x="360" y="122" font-size="14" class="hl">API (FastAPI)</text>
+            <text x="360" y="142" font-size="11" class="cap">repassa a credencial</text>
+            <line class="ln" x1="447" y1="125" x2="535" y2="125" marker-end="url(#a11m12)"/>
+
+            <rect class="box" x="540" y="80" width="330" height="95" rx="10"/>
+            <text x="705" y="108" font-size="14" class="hl">PostgreSQL</text>
+            <text x="705" y="132" font-size="12">conecta como auditor_cli</text>
+            <text x="705" y="154" font-size="12" class="cap">GET → SELECT ✓ &nbsp;&nbsp; POST → INSERT ✗ (403)</text>
+          </g>
+        </svg>
+      </div>
+      <div class="callout">A API <b>não reinventa</b> o controle de acesso — as permissões da Aula 10
+      valem sozinhas. O <code>auditor_cli</code> consulta, mas não cria.</div>
+    </section>
+
+    <!-- 13 · TESTAR -->
+    <section class="slide">
+      <span class="tag">Roteiro de teste</span>
+      <h2>Testando no Swagger</h2>
+      <div class="split">
+        <div>
+          <ol>
+            <li>rodar <code>uvicorn main:app --reload</code>;</li>
+            <li>abrir <code>localhost:8000/docs</code>;</li>
+            <li>clicar em <b>Authorize</b> e informar <code>auditor_cli</code> / senha;</li>
+            <li><b>GET /clientes</b> → "Try it out" → Execute → <b>200</b> + a lista;</li>
+            <li><b>POST /clientes</b> → preencher o JSON → Execute →
+            <b>403</b> (a role só tem <code>SELECT</code>);</li>
+            <li>repetir com <code>recepcionista_cli</code> → o POST agora dá <b>201</b>.</li>
+          </ol>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 360 220" role="img" aria-label="auditor consulta mas não cria; recepcionista faz os dois">
+            <g font-size="12" text-anchor="middle">
+              <rect class="head" x="20" y="30" width="320" height="30"/>
+              <rect class="cell" x="20" y="30" width="160" height="30"/><rect class="cell" x="180" y="30" width="80" height="30"/><rect class="cell" x="260" y="30" width="80" height="30"/>
+              <text x="100" y="50" class="hl">role</text><text x="220" y="50" class="hl">GET</text><text x="300" y="50" class="hl">POST</text>
+              <rect class="cell" x="20" y="60" width="160" height="30"/><rect class="cell" x="180" y="60" width="80" height="30"/><rect class="cell" x="260" y="60" width="80" height="30"/>
+              <text x="100" y="80">auditor_cli</text><text x="220" y="80" fill="#9ed0a0">200</text><text x="300" y="80" fill="#e06a54">403</text>
+              <rect class="cell" x="20" y="90" width="160" height="30"/><rect class="cell" x="180" y="90" width="80" height="30"/><rect class="cell" x="260" y="90" width="80" height="30"/>
+              <text x="100" y="110">recepcionista_cli</text><text x="220" y="110" fill="#9ed0a0">200</text><text x="300" y="110" fill="#9ed0a0">201</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 14 · QUANDO USAR -->
+    <section class="slide">
+      <span class="tag">Decisão</span>
+      <h2>Quando cada um</h2>
+      <div class="cols">
+        <div class="box">
+          <b>API REST</b>
+          <ul>
+            <li>vários sistemas consomem os dados</li>
+            <li>web / mobile / parceiros externos</li>
+            <li>regra de negócio e segurança centralizadas</li>
+            <li>o banco não deve ficar exposto</li>
+          </ul>
+        </div>
+        <div class="box">
+          <b>SQL direto</b>
+          <ul>
+            <li>ETL, BI, carga de dados</li>
+            <li>relatórios internos e scripts do DBA</li>
+            <li>consultas ad-hoc, migração</li>
+            <li>performance máxima, ambiente controlado</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout">Na prática, os dois convivem: a API para o dia a dia, SQL direto para o back-office.</div>
+    </section>
+
+    <!-- 15 · RESUMO -->
+    <section class="slide">
+      <span class="tag">Resumo</span>
+      <h2>O que levar</h2>
+      <ul>
+        <li>a <b>API</b> é uma camada HTTP entre quem consome e o banco;</li>
+        <li><b>método HTTP</b> ↔ <b>CRUD</b> ↔ <b>SQL</b> (GET/SELECT, POST/INSERT...);</li>
+        <li><b>FastAPI</b> gera o <b>Swagger</b> (<code>/docs</code>) para testar tudo pelo navegador;</li>
+        <li>com <b>HTTP Basic</b>, a API pode conectar no banco <b>como o próprio usuário</b> —
+        e as <b>permissões da Aula 10</b> valem automaticamente;</li>
+        <li><b>SQL direto</b> continua sendo o melhor para ETL, BI e trabalho do DBA.</li>
+      </ul>
+    </section>
+
+    <!-- 16 · PENSE (interativo) -->
+    <section class="slide">
+      <span class="tag">Exercício — antes da prova</span>
+      <h2>Os endpoints da agenda de contatos</h2>
+      <p>Tabela <code>contato(id, nome, telefone, email)</code>. Complete e clique em
+      <b>Verificar</b>. Na URL, use <code>/contatos</code> e <code>/contatos/{id}</code>.</p>
+      <table class="quiz" id="quiz16">
+        <tr><th>operação</th><th>método</th><th>URL</th><th>SQL</th><th>código&nbsp;OK</th></tr>
+        <tr data-m="GET" data-u="col" data-s="SELECT" data-c="200">
+          <td class="op">listar todos</td>
+          <td><select class="qz met"><option value=""></option><option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option></select></td>
+          <td><input class="qz" placeholder="/..."></td>
+          <td><input class="qz" placeholder="SELECT..."></td>
+          <td><select class="qz cod"><option value=""></option><option>200</option><option>201</option><option>204</option></select></td>
+        </tr>
+        <tr data-m="GET" data-u="item" data-s="SELECT" data-c="200">
+          <td class="op">ver um</td>
+          <td><select class="qz met"><option value=""></option><option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option></select></td>
+          <td><input class="qz" placeholder="/..."></td>
+          <td><input class="qz"></td>
+          <td><select class="qz cod"><option value=""></option><option>200</option><option>201</option><option>204</option></select></td>
+        </tr>
+        <tr data-m="POST" data-u="col" data-s="INSERT" data-c="201">
+          <td class="op">criar</td>
+          <td><select class="qz met"><option value=""></option><option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option></select></td>
+          <td><input class="qz"></td>
+          <td><input class="qz"></td>
+          <td><select class="qz cod"><option value=""></option><option>200</option><option>201</option><option>204</option></select></td>
+        </tr>
+        <tr data-m="PUT|PATCH" data-u="item" data-s="UPDATE" data-c="200">
+          <td class="op">alterar</td>
+          <td><select class="qz met"><option value=""></option><option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option></select></td>
+          <td><input class="qz"></td>
+          <td><input class="qz"></td>
+          <td><select class="qz cod"><option value=""></option><option>200</option><option>201</option><option>204</option></select></td>
+        </tr>
+        <tr data-m="DELETE" data-u="item" data-s="DELETE" data-c="204|200">
+          <td class="op">remover</td>
+          <td><select class="qz met"><option value=""></option><option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option></select></td>
+          <td><input class="qz"></td>
+          <td><input class="qz"></td>
+          <td><select class="qz cod"><option value=""></option><option>200</option><option>201</option><option>204</option></select></td>
+        </tr>
+      </table>
+      <button class="check" data-quiz="quiz16">Verificar</button>
+      <div class="quiz-msg" id="msg-quiz16"></div>
+
+      <script>
+      (function () {
+        function norm(s){return (s||'').trim().toLowerCase().replace(/\s+/g,'').replace(/\/$/,'');}
+        function urlOk(v, kind){
+          v = norm(v).replace(/\/(\{[^}]*\}|<[^>]*>|:\w+|\d+)$/, '/#');  // /{id} /:id /7 -> /#
+          if (kind === 'col')  return v === '/contatos' || v === 'contatos';
+          return v === '/contatos/#';                                   // item
+        }
+        var btn = document.querySelector('button.check[data-quiz="quiz16"]');
+        btn.addEventListener('click', function () {
+          var rows = document.querySelectorAll('#quiz16 tr[data-m]');
+          var acertos = 0;
+          rows.forEach(function (r) {
+            var met = r.querySelector('select.met'),
+                url = r.querySelectorAll('input')[0],
+                sql = r.querySelectorAll('input')[1],
+                cod = r.querySelector('select.cod');
+            var okM = new RegExp('^(' + r.dataset.m + ')$', 'i').test(met.value.trim());
+            var okU = urlOk(url.value, r.dataset.u);
+            var okS = norm(sql.value).indexOf(r.dataset.s.toLowerCase()) === 0;
+            var okC = new RegExp('^(' + r.dataset.c + ')$').test(cod.value.trim());
+            [ [met, okM], [url, okU], [sql, okS], [cod, okC] ].forEach(function (p) {
+              p[0].classList.toggle('ok', p[1]); p[0].classList.toggle('bad', !p[1]);
+            });
+            if (okM && okU && okS && okC) acertos++;
+          });
+          var msg = document.getElementById('msg-quiz16');
+          msg.innerHTML = acertos === rows.length
+            ? '<span class="ok">✓ As 5 linhas certas. Códigos: 200 leitura/alteração · 201 criação · 204 remoção. Um endpoint só de leitura usaria a role <code>auditor_cli</code> (Aula 10).</span>'
+            : '<span class="bad">' + acertos + ' de ' + rows.length + ' — ajuste as células vermelhas. GET↔SELECT/200 · POST↔INSERT/201 · PUT↔UPDATE/200 · DELETE↔DELETE/204. Coleção sem id, item com /{id}.</span>';
+        });
+      })();
+      </script>
+    </section>
+
+    <!-- 17 · FECHAMENTO -->
+    <section class="slide cover">
+      <img class="crest" src="assets/img/logo_univassouras.png" alt="Universidade de Vassouras">
+      <h1>Dúvidas?</h1>
+      <div class="meta">
+        Prof. Diego Ramos Inácio<br>
+        diego.inacio@univassouras.edu.br<br>
+        Curso de Engenharia de Software — Universidade de Vassouras
+      </div>
+    </section>
+
+  </div>
+
+  <div class="deck-count">1 / 17</div>
+  <div class="deck-nav">
+    <button data-prev aria-label="Slide anterior">‹</button>
+    <button data-next aria-label="Próximo slide">›</button>
+  </div>
+
+  <script src="assets/js/deck.js"></script>
+</body>
+</html>
